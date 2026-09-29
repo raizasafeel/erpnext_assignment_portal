@@ -1,8 +1,12 @@
 import json
 from urllib.parse import urlparse
 
+import frappe
 import requests
+from urllib3.exceptions import HTTPError, ReadTimeoutError
 
+from erpnext_assignment_portal.constants import SETTINGS
+from erpnext_assignment_portal.hosts import canonical_site
 from erpnext_assignment_portal.signing import sign
 
 VERIFY_OWNER = "erpnext_assignment_checks.api.verify_owner"
@@ -16,11 +20,21 @@ class RemoteError(Exception):
 		self.code = code
 
 
+def allowed_patterns() -> list[str]:
+	rows = frappe.get_single(SETTINGS).allowed_hosts
+	return [row.pattern for row in rows]
+
+
 def post_signed(site: str, method: str, payload: dict) -> dict:
+	try:
+		if canonical_site(site, allowed_patterns()) != site:
+			raise RemoteError("rejected")
+	except frappe.ValidationError:
+		raise RemoteError("rejected")
 	host = urlparse(site).hostname
 	path = f"/api/method/{method}"
 	body = json.dumps(payload, separators=(",", ":")).encode()
-	headers = {"Content-Type": "application/json", **sign(host, path, body)}
+	headers = {"Content-Type": "application/json", "Accept-Encoding": "identity", **sign(host, path, body)}
 	try:
 		response = requests.post(
 			f"https://{host}{path}",
@@ -42,12 +56,17 @@ def post_signed(site: str, method: str, payload: dict) -> dict:
 			raise RemoteError("rejected")
 		if response.status_code != 200:
 			raise RemoteError("bad_response")
-		raw = response.raw.read(MAX_RESPONSE_BYTES + 1)
+		try:
+			raw = response.raw.read(MAX_RESPONSE_BYTES + 1)
+		except ReadTimeoutError:
+			raise RemoteError("timeout")
+		except (HTTPError, requests.RequestException):
+			raise RemoteError("unreachable")
 	if len(raw) > MAX_RESPONSE_BYTES:
 		raise RemoteError("bad_response")
 	try:
 		message = json.loads(raw).get("message")
-	except (ValueError, AttributeError):
+	except (ValueError, AttributeError, RecursionError):
 		raise RemoteError("bad_response")
 	if not isinstance(message, dict):
 		raise RemoteError("bad_response")
