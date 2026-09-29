@@ -45,6 +45,7 @@ class TestRuns(IntegrationTestCase):
 		).insert()
 		self.enqueue = patch("erpnext_assignment_portal.runs.frappe.enqueue").start()
 		self.addCleanup(patch.stopall)
+		patch("erpnext_assignment_portal.runs.frappe.db.commit").start()
 
 	def test_start_run_dedupes(self):
 		first = runs.start_run(self.user)
@@ -131,3 +132,23 @@ class TestRuns(IntegrationTestCase):
 		):
 			runs.execute_run(name)
 		self.assertEqual(frappe.db.get_value(RUN, name, "passed"), 2)
+
+	def test_unexpected_failure_ends_in_internal_error(self):
+		name = runs.start_run(self.user)
+		real_finish = runs._finish
+
+		def finish(run, rows=None, error_code=None):
+			if not error_code:
+				raise frappe.LinkValidationError("gone")
+			real_finish(run, rows=rows, error_code=error_code)
+
+		reply = {"results": [{"check_id": i, "found_count": 2} for i in self.ids]}
+		with (
+			patch("erpnext_assignment_portal.runs.post_signed", return_value=reply),
+			patch("erpnext_assignment_portal.runs._finish", side_effect=finish),
+			patch("erpnext_assignment_portal.runs.frappe.db.rollback"),
+			patch("erpnext_assignment_portal.runs.frappe.log_error"),
+			patch("erpnext_assignment_portal.runs.frappe.publish_realtime"),
+		):
+			runs.execute_run(name)
+		self.assertEqual(frappe.db.get_value(RUN, name, ["status", "error_code"]), ("Error", "internal"))

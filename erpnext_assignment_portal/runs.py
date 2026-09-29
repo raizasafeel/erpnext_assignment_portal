@@ -89,6 +89,18 @@ def execute_run(run_name: str) -> None:
 	if run.status != "Queued":
 		return
 	run.db_set({"status": "Running", "started_on": now_datetime()})
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- publish Running; drop the row lock before the outbound call
+	try:
+		_execute(run)
+	except RemoteError as e:
+		_finish(run, error_code=e.code)
+	except Exception:
+		frappe.db.rollback()
+		frappe.log_error(f"Grader run {run_name} failed")
+		_finish(run, error_code="internal")
+
+
+def _execute(run) -> None:
 	sent = published_checks()
 	site = frappe.db.get_value(STUDENT_SITE, run.student_site, "site")
 	payload = {
@@ -96,15 +108,8 @@ def execute_run(run_name: str) -> None:
 			{"check_id": c.check_id, "target_doctype": c.target_doctype, "filters": c.filters} for c in sent
 		]
 	}
-	try:
-		rows = evaluate(sent, post_signed(site, RUN_CHECKS, payload).get("results"))
-	except RemoteError as e:
-		_finish(run, error_code=e.code)
-	except Exception:
-		frappe.log_error(f"Grader run {run_name} failed")
-		_finish(run, error_code="internal")
-	else:
-		_finish(run, rows=rows)
+	rows = evaluate(sent, post_signed(site, RUN_CHECKS, payload).get("results"))
+	_finish(run, rows=rows)
 
 
 def evaluate(sent: list, results) -> list[dict]:
