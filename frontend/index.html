@@ -1,12 +1,13 @@
 <!doctype html>
-<html lang="en">
+<html class="h-full" lang="{{ boot.lang or 'en' }}" dir="{{ boot.text_direction or 'ltr' }}">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>ERPNext Assignment Portal</title>
+		<link rel="icon" href="{{ favicon }}" />
+		<title>{{ title | e }}</title>
 	</head>
-	<body>
-		<div id="app"></div>
+	<body class="h-full bg-surface-base">
+		<div id="app" class="h-full"></div>
 		<script type="module" src="/src/main.ts"></script>
 	</body>
 </html>

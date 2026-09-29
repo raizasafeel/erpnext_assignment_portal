@@ -3,9 +3,14 @@ from frappe.translate import get_user_lang
 from frappe.utils.jinja_globals import is_rtl
 
 no_cache = 1
+ROUTE = "/assignments-portal/erpnext"
 
 
 def get_context(context):
+	if frappe.session.user == "Guest":
+		frappe.local.flags.redirect_location = f"/login?redirect-to={ROUTE}"
+		raise frappe.Redirect
+
 	csrf_token = frappe.sessions.get_csrf_token()
 
 	context.csrf_token = csrf_token
