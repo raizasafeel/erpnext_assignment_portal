@@ -34,6 +34,16 @@ class TestHosts(IntegrationTestCase):
 			"",
 			"https://[::1",
 			"https://rza.m.frappe.cloud:99999",
+			"https://evil.com\\.m.frappe.cloud",
+			"https://evil.com%5c.m.frappe.cloud",
+			"https://\u00df.m.frappe.cloud",
+			"https://.m.frappe.cloud",
+			"https://*.m.frappe.cloud",
+			"https://a..m.frappe.cloud",
+			"https://a b.m.frappe.cloud",
+			"https://a%2f.m.frappe.cloud",
+			None,
+			123,
 		):
 			with self.subTest(url=url):
 				self.assertRaises(frappe.ValidationError, canonical_site, url, P)
