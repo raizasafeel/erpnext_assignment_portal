@@ -21,7 +21,9 @@ class TestRemote(IntegrationTestCase):
 	def setUp(self):
 		self.addCleanup(frappe.db.rollback)
 		patcher = patch(
-			"erpnext_assignment_portal.remote.allowed_patterns", return_value=["*.m.frappe.cloud"]
+			"erpnext_assignment_portal.erpnext_assignment_portal.doctype.grader_settings"
+			".grader_settings.GraderSettings.host_patterns",
+			return_value=["*.m.frappe.cloud"],
 		)
 		patcher.start()
 		self.addCleanup(patcher.stop)

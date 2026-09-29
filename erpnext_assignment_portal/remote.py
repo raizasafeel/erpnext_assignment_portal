@@ -20,14 +20,9 @@ class RemoteError(Exception):
 		self.code = code
 
 
-def allowed_patterns() -> list[str]:
-	rows = frappe.get_single(SETTINGS).allowed_hosts
-	return [row.pattern for row in rows]
-
-
 def post_signed(site: str, method: str, payload: dict) -> dict:
 	try:
-		if canonical_site(site, allowed_patterns()) != site:
+		if canonical_site(site, frappe.get_single(SETTINGS).host_patterns()) != site:
 			raise RemoteError("rejected")
 	except frappe.ValidationError:
 		raise RemoteError("rejected")
