@@ -1,0 +1,46 @@
+{
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section",
+  "check_id",
+  "found_count",
+  "check_error",
+  "passed"
+ ],
+ "fields": [
+  {
+   "fieldname": "section",
+   "fieldtype": "Link",
+   "label": "Section",
+   "options": "Grader Section"
+  },
+  {
+   "fieldname": "check_id",
+   "fieldtype": "Data",
+   "label": "Check Id"
+  },
+  {
+   "fieldname": "found_count",
+   "fieldtype": "Int",
+   "label": "Found Count"
+  },
+  {
+   "fieldname": "check_error",
+   "fieldtype": "Data",
+   "label": "Check Error"
+  },
+  {
+   "fieldname": "passed",
+   "fieldtype": "Check",
+   "label": "Passed"
+  }
+ ],
+ "istable": 1,
+ "module": "ERPNext Assignment Portal",
+ "name": "Grader Run Result",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

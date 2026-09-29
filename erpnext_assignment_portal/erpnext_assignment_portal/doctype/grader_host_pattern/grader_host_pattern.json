@@ -1,0 +1,23 @@
+{
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "pattern"
+ ],
+ "fields": [
+  {
+   "fieldname": "pattern",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Pattern",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "module": "ERPNext Assignment Portal",
+ "name": "Grader Host Pattern",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

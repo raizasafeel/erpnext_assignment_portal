@@ -146,14 +146,11 @@ website_route_rules = [
 # 	}
 # }
 
-# Scheduled Tasks
-# ---------------
+# Setup
+# -----
 
-scheduler_events = {
-	"monthly": [
-		"erpnext_assignment_portal.erpnext_assignment_portal.delete_tokens.cleanup_unfulfilled_token_requests",
-	],
-}
+after_install = "erpnext_assignment_portal.setup.after_install"
+after_migrate = "erpnext_assignment_portal.setup.after_install"
 
 # Testing
 # -------
@@ -246,4 +243,3 @@ require_type_annotated_api_methods = True
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
-

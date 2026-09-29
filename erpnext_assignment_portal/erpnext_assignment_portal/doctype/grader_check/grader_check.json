@@ -1,0 +1,59 @@
+{
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "check_id",
+  "title",
+  "target_doctype",
+  "filters",
+  "expected_min",
+  "expected_max"
+ ],
+ "fields": [
+  {
+   "fieldname": "check_id",
+   "fieldtype": "Data",
+   "label": "Check Id",
+   "read_only": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_doctype",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Target Doctype",
+   "reqd": 1
+  },
+  {
+   "fieldname": "filters",
+   "fieldtype": "JSON",
+   "label": "Filters",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "expected_min",
+   "fieldtype": "Int",
+   "label": "Expected Min"
+  },
+  {
+   "description": "0 or blank means no upper bound",
+   "fieldname": "expected_max",
+   "fieldtype": "Int",
+   "label": "Expected Max"
+  }
+ ],
+ "istable": 1,
+ "module": "ERPNext Assignment Portal",
+ "name": "Grader Check",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -4,6 +4,3 @@
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
-erpnext_assignment_portal.patches.v0_0_1.split_days_into_sections
-erpnext_assignment_portal.patches.v0_0_1.rename_submission_day_to_section
-erpnext_assignment_portal.patches.v0_0_1.split_submissions_by_section

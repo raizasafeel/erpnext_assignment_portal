@@ -1,0 +1,61 @@
+{
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "course",
+  "signing_key_id",
+  "default_link_days",
+  "run_rate_limit_per_hour",
+  "allowed_hosts"
+ ],
+ "fields": [
+  {
+   "fieldname": "course",
+   "fieldtype": "Link",
+   "label": "Course",
+   "options": "LMS Course",
+   "reqd": 1
+  },
+  {
+   "fieldname": "signing_key_id",
+   "fieldtype": "Data",
+   "label": "Signing Key Id",
+   "reqd": 1
+  },
+  {
+   "fieldname": "default_link_days",
+   "fieldtype": "Int",
+   "label": "Default Link Days"
+  },
+  {
+   "default": "10",
+   "fieldname": "run_rate_limit_per_hour",
+   "fieldtype": "Int",
+   "label": "Run Rate Limit Per Hour"
+  },
+  {
+   "fieldname": "allowed_hosts",
+   "fieldtype": "Table",
+   "label": "Allowed Hosts",
+   "options": "Grader Host Pattern"
+  }
+ ],
+ "issingle": 1,
+ "module": "ERPNext Assignment Portal",
+ "name": "Grader Settings",
+ "permissions": [
+  {
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Grader Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
