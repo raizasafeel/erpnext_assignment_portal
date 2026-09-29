@@ -18,23 +18,21 @@
 				</template>
 			</ItemListRow>
 		</div>
-		<Editor
-			v-if="section.details"
-			:model-value="section.details"
-			:editable="false"
-			:extensions="[RichTextKit]"
-		>
-			<EditorContent />
-		</Editor>
+		<SectionDetails v-if="section.details" :html="section.details" />
 	</div>
 </template>
 
 <script setup lang="ts">
-import { Badge, ItemListRow, Progress } from "frappe-ui";
-import { Editor, EditorContent, RichTextKit } from "frappe-ui/editor";
+import { Badge, ItemListRow, LoadingText, Progress } from "frappe-ui";
+import { defineAsyncComponent } from "vue";
 import type { Run, Section } from "../api";
 import { checkResult, type Score } from "../lib/scores";
 import { __ } from "../translate";
+
+const SectionDetails = defineAsyncComponent({
+	loader: () => import("./SectionDetails.vue"),
+	loadingComponent: LoadingText,
+});
 
 const props = defineProps<{ section: Section; run: Run | null; score: Score }>();
 
