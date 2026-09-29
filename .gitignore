@@ -55,5 +55,5 @@ jspm_packages/
 .aider*
 
 # Built frontend assets (output of `cd frontend && yarn build`)
-erpnext_grader/public/frontend
-erpnext_grader/www/assignment_portal.html
+erpnext_assignment_portal/public/frontend
+erpnext_assignment_portal/www/assignment_portal.html

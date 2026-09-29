@@ -31,7 +31,7 @@ const props = defineProps<{
 const emit = defineEmits<(e: "disconnected") => void>()
 
 const disconnectSite = createResource({
-	url: "erpnext_grader.erpnext_grader.api.disconnect_site",
+	url: "erpnext_assignment_portal.erpnext_assignment_portal.api.disconnect_site",
 })
 
 const lastCheckedDisplay = computed(() => {

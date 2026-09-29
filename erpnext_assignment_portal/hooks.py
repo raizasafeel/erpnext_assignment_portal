@@ -1,5 +1,5 @@
-app_name = "erpnext_grader"
-app_title = "Erpnext Grader"
+app_name = "erpnext_assignment_portal"
+app_title = "ERPNext Assignment Portal"
 app_publisher = "Raiza"
 app_description = "Grader for erpnext assignment on frappe school"
 app_email = "raizasafeel@gmail.com"
@@ -9,8 +9,8 @@ required_apps = ["lms"]
 
 add_to_apps_screen = [
 	{
-		"name": "erpnext_grader",
-		"logo": "/assets/erpnext_grader/images/logo.png",
+		"name": "erpnext_assignment_portal",
+		"logo": "/assets/erpnext_assignment_portal/images/logo.png",
 		"title": "Assignment Portal",
 		"route": "/assignments-portal/erpnext",
 	}
@@ -25,15 +25,15 @@ website_route_rules = [
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/erpnext_grader/css/erpnext_grader.css"
-# app_include_js = "/assets/erpnext_grader/js/erpnext_grader.js"
+# app_include_css = "/assets/erpnext_assignment_portal/css/erpnext_assignment_portal.css"
+# app_include_js = "/assets/erpnext_assignment_portal/js/erpnext_assignment_portal.js"
 
 # include js, css files in header of web template
-# web_include_css = "/assets/erpnext_grader/css/erpnext_grader.css"
-# web_include_js = "/assets/erpnext_grader/js/erpnext_grader.js"
+# web_include_css = "/assets/erpnext_assignment_portal/css/erpnext_assignment_portal.css"
+# web_include_js = "/assets/erpnext_assignment_portal/js/erpnext_assignment_portal.js"
 
 # include custom scss in every website theme (without file extension ".scss")
-# website_theme_scss = "erpnext_grader/public/scss/website"
+# website_theme_scss = "erpnext_assignment_portal/public/scss/website"
 
 # include js, css files in header of web form
 # webform_include_js = {"doctype": "public/js/doctype.js"}
@@ -51,7 +51,7 @@ website_route_rules = [
 # Svg Icons
 # ------------------
 # include app icons in desk
-# app_include_icons = "erpnext_grader/public/icons.svg"
+# app_include_icons = "erpnext_assignment_portal/public/icons.svg"
 
 # Home Pages
 # ----------
@@ -78,49 +78,49 @@ website_route_rules = [
 
 # add methods and filters to jinja environment
 # jinja = {
-# 	"methods": "erpnext_grader.utils.jinja_methods",
-# 	"filters": "erpnext_grader.utils.jinja_filters"
+# 	"methods": "erpnext_assignment_portal.utils.jinja_methods",
+# 	"filters": "erpnext_assignment_portal.utils.jinja_filters"
 # }
 
 # Installation
 # ------------
 
-# before_install = "erpnext_grader.install.before_install"
-# after_install = "erpnext_grader.install.after_install"
+# before_install = "erpnext_assignment_portal.install.before_install"
+# after_install = "erpnext_assignment_portal.install.after_install"
 
 # Uninstallation
 # ------------
 
-# before_uninstall = "erpnext_grader.uninstall.before_uninstall"
-# after_uninstall = "erpnext_grader.uninstall.after_uninstall"
+# before_uninstall = "erpnext_assignment_portal.uninstall.before_uninstall"
+# after_uninstall = "erpnext_assignment_portal.uninstall.after_uninstall"
 
 # Integration Setup
 # ------------------
 # To set up dependencies/integrations with other apps
 # Name of the app being installed is passed as an argument
 
-# before_app_install = "erpnext_grader.utils.before_app_install"
-# after_app_install = "erpnext_grader.utils.after_app_install"
+# before_app_install = "erpnext_assignment_portal.utils.before_app_install"
+# after_app_install = "erpnext_assignment_portal.utils.after_app_install"
 
 # Integration Cleanup
 # -------------------
 # To clean up dependencies/integrations with other apps
 # Name of the app being uninstalled is passed as an argument
 
-# before_app_uninstall = "erpnext_grader.utils.before_app_uninstall"
-# after_app_uninstall = "erpnext_grader.utils.after_app_uninstall"
+# before_app_uninstall = "erpnext_assignment_portal.utils.before_app_uninstall"
+# after_app_uninstall = "erpnext_assignment_portal.utils.after_app_uninstall"
 
 # Build
 # ------------------
 # To hook into the build process
 
-# after_build = "erpnext_grader.build.after_build"
+# after_build = "erpnext_assignment_portal.build.after_build"
 
 # Desk Notifications
 # ------------------
 # See frappe.core.notifications.get_notification_config
 
-# notification_config = "erpnext_grader.notifications.get_notification_config"
+# notification_config = "erpnext_assignment_portal.notifications.get_notification_config"
 
 # Permissions
 # -----------
@@ -151,35 +151,35 @@ website_route_rules = [
 
 scheduler_events = {
 	"monthly": [
-		"erpnext_grader.erpnext_grader.delete_tokens.cleanup_unfulfilled_token_requests",
+		"erpnext_assignment_portal.erpnext_assignment_portal.delete_tokens.cleanup_unfulfilled_token_requests",
 	],
 }
 
 # Testing
 # -------
 
-# before_tests = "erpnext_grader.install.before_tests"
+# before_tests = "erpnext_assignment_portal.install.before_tests"
 
 # Extend DocType Class
 # ------------------------------d.cle
 #
 # Specify custom mixins to extend the standard doctype controller.
 # extend_doctype_class = {
-# 	"Task": "erpnext_grader.custom.task.CustomTaskMixin"
+# 	"Task": "erpnext_assignment_portal.custom.task.CustomTaskMixin"
 # }
 
 # Overriding Methods
 # ------------------------------
 #
 # override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "erpnext_grader.event.get_events"
+# 	"frappe.desk.doctype.event.event.get_events": "erpnext_assignment_portal.event.get_events"
 # }
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
 # override_doctype_dashboards = {
-# 	"Task": "erpnext_grader.task.get_dashboard_data"
+# 	"Task": "erpnext_assignment_portal.task.get_dashboard_data"
 # }
 
 # exempt linked doctypes from being automatically cancelled
@@ -193,13 +193,13 @@ scheduler_events = {
 
 # Request Events
 # ----------------
-# before_request = ["erpnext_grader.utils.before_request"]
-# after_request = ["erpnext_grader.utils.after_request"]
+# before_request = ["erpnext_assignment_portal.utils.before_request"]
+# after_request = ["erpnext_assignment_portal.utils.after_request"]
 
 # Job Events
 # ----------
-# before_job = ["erpnext_grader.utils.before_job"]
-# after_job = ["erpnext_grader.utils.after_job"]
+# before_job = ["erpnext_assignment_portal.utils.before_job"]
+# after_job = ["erpnext_assignment_portal.utils.after_job"]
 
 # User Data Protection
 # --------------------
@@ -229,7 +229,7 @@ scheduler_events = {
 # --------------------------------
 
 # auth_hooks = [
-# 	"erpnext_grader.auth.validate"
+# 	"erpnext_assignment_portal.auth.validate"
 # ]
 
 # Automatically update python controller files with type annotations for this app.

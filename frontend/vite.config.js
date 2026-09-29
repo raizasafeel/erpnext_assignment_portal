@@ -16,7 +16,7 @@ export default defineConfig(async ({ mode }) => {
 				lucideIcons: true,
 				jinjaBootData: true,
 				buildConfig: {
-					indexHtmlPath: "../erpnext_grader/www/assignment_portal.html",
+					indexHtmlPath: "../erpnext_assignment_portal/www/assignment_portal.html",
 				},
 			}),
 			vue(),

@@ -293,7 +293,7 @@ def regrade() -> dict:
 		frappe.throw(_("No valid token. Reinstall the grader support app to refresh."))
 
 	frappe.enqueue(
-		"erpnext_grader.erpnext_grader.api._run_grade",
+		"erpnext_assignment_portal.erpnext_assignment_portal.api._run_grade",
 		queue="short",
 		job_name=f"grade-{user}",
 		user=user,
@@ -354,7 +354,7 @@ def _run_grade(user: str, site_name: str, site_url: str) -> None:
 		token = state.bearer
 		checks = _combined_checks()
 
-		url = f"{site_url.rstrip('/')}/api/method/erpnext_grader_support.erpnext_grader_support.api.run_checks_api"
+		url = f"{site_url.rstrip('/')}/api/method/erpnext_assignment_checks.erpnext_assignment_checks.api.run_checks_api"
 		try:
 			resp = requests.post(
 				url, headers={"X-Grader-Token": token}, json={"checks": checks}, timeout=30

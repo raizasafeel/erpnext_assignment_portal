@@ -1,6 +1,6 @@
 import frappe
 from frappe.tests.utils import FrappeTestCase
-from erpnext_grader.erpnext_grader import api
+from erpnext_assignment_portal.erpnext_assignment_portal import api
 
 
 class TestGraderAPI(FrappeTestCase):
@@ -19,7 +19,7 @@ class TestGraderAPI(FrappeTestCase):
 		self.assertNotIn("day", rows[0])
 
 	def test_split_results_per_section(self):
-		from erpnext_grader.erpnext_grader.api import _submissions_from_results
+		from erpnext_assignment_portal.erpnext_assignment_portal.api import _submissions_from_results
 		results = [
 			{"label": "a", "passed": True, "section": "Company", "title": "Co", "expected": "", "actual": ""},
 			{"label": "b", "passed": False, "section": "Company", "title": "Co", "expected": "", "actual": ""},

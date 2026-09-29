@@ -1,5 +1,5 @@
 [project]
-name = "erpnext_grader"
+name = "erpnext_assignment_portal"
 authors = [
     { name = "Raiza", email = "raizasafeel@gmail.com"}
 ]
@@ -21,8 +21,8 @@ build-backend = "flit_core.buildapi"
 
 [tool.bench.assets]
 build_dir = "./frontend"
-out_dir = "../erpnext_grader/public/frontend"
-index_html_path = "../erpnext_grader/www/assignment_portal.html"
+out_dir = "../erpnext_assignment_portal/public/frontend"
+index_html_path = "../erpnext_assignment_portal/www/assignment_portal.html"
 
 # These apt dependencies will be installed from Ubuntu repositories when you host your app on Frappe Cloud
 [deploy.dependencies.apt]

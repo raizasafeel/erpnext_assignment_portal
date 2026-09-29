@@ -1,5 +1,5 @@
 {
-  "name": "erpnext_grader",
+  "name": "erpnext_assignment_portal",
   "version": "1.0.0",
   "description": "Grader for erpnext assignment on frappe school",
   "type": "module",

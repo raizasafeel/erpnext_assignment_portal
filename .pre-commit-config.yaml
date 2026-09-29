@@ -8,7 +8,7 @@ repos:
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
-        files: "erpnext_grader.*"
+        files: "erpnext_assignment_portal.*"
         exclude: ".*json$|.*txt$|.*csv|.*md|.*svg"
       - id: check-merge-conflict
       - id: check-ast
@@ -38,11 +38,11 @@ repos:
         # Ignore any files that might contain jinja / bundles
         exclude: |
             (?x)^(
-                erpnext_grader/public/dist/.*|
+                erpnext_assignment_portal/public/dist/.*|
                 .*node_modules.*|
                 .*boilerplate.*|
-                erpnext_grader/templates/includes/.*|
-                erpnext_grader/public/js/lib/.*
+                erpnext_assignment_portal/templates/includes/.*|
+                erpnext_assignment_portal/public/js/lib/.*
             )$
 
 
@@ -55,12 +55,12 @@ repos:
         # Ignore any files that might contain jinja / bundles
         exclude: |
             (?x)^(
-                erpnext_grader/public/dist/.*|
+                erpnext_assignment_portal/public/dist/.*|
                 cypress/.*|
                 .*node_modules.*|
                 .*boilerplate.*|
-                erpnext_grader/templates/includes/.*|
-                erpnext_grader/public/js/lib/.*
+                erpnext_assignment_portal/templates/includes/.*|
+                erpnext_assignment_portal/public/js/lib/.*
             )$
 
 ci:

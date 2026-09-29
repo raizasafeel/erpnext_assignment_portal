@@ -13,11 +13,11 @@ def get_context(context):
 	context.boot = get_boot(csrf_token)
 	context.favicon = (
 		frappe.db.get_single_value("Website Settings", "favicon")
-		or "/assets/erpnext_grader/images/logo.png"
+		or "/assets/erpnext_assignment_portal/images/logo.png"
 	)
 	context.title = (
 		frappe.db.get_single_value("Website Settings", "app_name")
-		or "ERPNext Grader"
+		or "ERPNext Assignment Portal"
 	)
 	return context
 

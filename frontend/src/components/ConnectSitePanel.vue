@@ -6,7 +6,7 @@
 			<GraderLogo />
 			<div>
 				<h1 class="text-xl font-semibold tracking-tight text-ink-gray-9">
-					ERPNext Grader
+					ERPNext Assignment Portal
 				</h1>
 				<p class="mt-1 text-sm text-ink-gray-5">
 					Paste your practice-site URL to start grading
@@ -57,7 +57,7 @@ const props = defineProps<{
 const emit = defineEmits<(e: "connected") => void>();
 
 const registerSite = createResource({
-	url: "erpnext_grader.erpnext_grader.api.register_site",
+	url: "erpnext_assignment_portal.erpnext_assignment_portal.api.register_site",
 });
 
 const siteInput = ref("");

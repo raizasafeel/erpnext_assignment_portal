@@ -4,7 +4,7 @@ import json
 import re
 
 import frappe
-from erpnext_grader.erpnext_grader.doctype.erpnext_assignment.erpnext_assignment import (
+from erpnext_assignment_portal.erpnext_assignment_portal.doctype.erpnext_assignment.erpnext_assignment import (
 	_count_checks,
 )
 

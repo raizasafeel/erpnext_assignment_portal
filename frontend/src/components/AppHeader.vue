@@ -18,7 +18,7 @@ defineEmits<{ (e: 'open-details'): void; (e: 'logout'): void }>()
     <div class="flex items-center gap-3">
       <GraderLogo />
       <div class="flex flex-col leading-tight">
-        <span class="text-base font-semibold text-ink-gray-9">ERPNext Grader</span>
+        <span class="text-base font-semibold text-ink-gray-9">ERPNext Assignment Portal</span>
         <span class="text-xs text-ink-gray-5">Student Portal</span>
       </div>
     </div>

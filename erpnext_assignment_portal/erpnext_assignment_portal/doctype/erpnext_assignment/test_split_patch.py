@@ -1,6 +1,6 @@
 import frappe
 from frappe.tests.utils import FrappeTestCase
-from erpnext_grader.patches.v0_0_1.split_days_into_sections import (
+from erpnext_assignment_portal.patches.v0_0_1.split_days_into_sections import (
 	execute as split_execute,
 	slice_markdown,
 )

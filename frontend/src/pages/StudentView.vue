@@ -91,22 +91,22 @@ type PortalContext = {
 }
 
 const portalContext = createResource({
-	url: "erpnext_grader.erpnext_grader.api.get_current_user_info",
+	url: "erpnext_assignment_portal.erpnext_assignment_portal.api.get_current_user_info",
 	auto: true,
 })
 
 const assignmentsResource = createResource({
-	url: "erpnext_grader.erpnext_grader.api.get_assignments",
+	url: "erpnext_assignment_portal.erpnext_assignment_portal.api.get_assignments",
 	auto: true,
 })
 
 const submissionsResource = createResource({
-	url: "erpnext_grader.erpnext_grader.api.get_my_submissions",
+	url: "erpnext_assignment_portal.erpnext_assignment_portal.api.get_my_submissions",
 	auto: true,
 })
 
 const regrade = createResource({
-	url: "erpnext_grader.erpnext_grader.api.regrade",
+	url: "erpnext_assignment_portal.erpnext_assignment_portal.api.regrade",
 })
 
 const logout = createResource({

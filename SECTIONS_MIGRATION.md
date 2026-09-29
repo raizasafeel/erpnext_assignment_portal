@@ -18,7 +18,7 @@ is now one section (exploded from each top-level key of the legacy per-day `chec
 - **`grade_day(day)` removed.** Replaced by **`regrade()`** (no args) — a single site-wide re-check that grades every published section in one call and writes one submission per section.
 
 ## Environment change
-- `erpnext_assignment_portal` was **uninstalled** from `erpnext-grader.localhost`: it shipped a colliding `ERPNext Assignment` DocType (old `day`-unique schema) on the same table, which broke `bench migrate`. `erpnext_grader` now solely owns the assignment doctypes.
+- `erpnext_assignment_portal` was **uninstalled** from `erpnext-grader.localhost`: it shipped a colliding `ERPNext Assignment` DocType (old `day`-unique schema) on the same table, which broke `bench migrate`. `erpnext_assignment_portal` now solely owns the assignment doctypes.
 
 ## TODO — docs.frappe.io/learning (per CLAUDE.md docs-update trigger)
 - [ ] Document the new `section` / `section_order` / `blurb` fields on `ERPNext Assignment`.

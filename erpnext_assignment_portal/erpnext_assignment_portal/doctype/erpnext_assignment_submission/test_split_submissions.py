@@ -1,7 +1,7 @@
 import frappe
 from frappe.tests.utils import FrappeTestCase
-from erpnext_grader.patches.v0_0_1.rename_submission_day_to_section import execute as rename_execute
-from erpnext_grader.patches.v0_0_1.split_submissions_by_section import execute as split_execute
+from erpnext_assignment_portal.patches.v0_0_1.rename_submission_day_to_section import execute as rename_execute
+from erpnext_assignment_portal.patches.v0_0_1.split_submissions_by_section import execute as split_execute
 
 
 def _result(section, passed):
