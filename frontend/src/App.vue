@@ -1,11 +1,9 @@
-<script setup lang="ts">
-import { FrappeUIProvider } from "frappe-ui"
-
-import StudentView from "@/pages/StudentView.vue"
-</script>
-
 <template>
 	<FrappeUIProvider>
-		<StudentView />
+		<RouterView />
 	</FrappeUIProvider>
 </template>
+
+<script setup lang="ts">
+import { FrappeUIProvider } from "frappe-ui";
+</script>
