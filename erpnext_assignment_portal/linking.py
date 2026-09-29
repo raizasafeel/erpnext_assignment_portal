@@ -24,20 +24,32 @@ def link_site(user: str, url: str) -> str:
 			).format(email)
 		)
 	name = frappe.db.get_value(STUDENT_SITE, {"student": user}, "name", for_update=True)
-	doc = frappe.get_doc(STUDENT_SITE, name) if name else frappe.new_doc(STUDENT_SITE)
-	doc.update(
-		{
-			"student": user,
-			"site": site,
-			"status": "Active",
-			"linked_on": now_datetime(),
-			"expires_on": add_days(now_datetime(), settings.default_link_days)
-			if settings.default_link_days
-			else None,
-		}
-	)
+	holder = frappe.db.get_value(STUDENT_SITE, {"site": site}, "student")
+	if holder and holder != user:
+		frappe.throw(_("This site is already linked to another student."))
+	if name:
+		doc = frappe.get_doc(STUDENT_SITE, name)
+		doc.update({"site": site, "linked_on": now_datetime()})
+	else:
+		doc = frappe.new_doc(STUDENT_SITE)
+		doc.update(
+			{
+				"student": user,
+				"site": site,
+				"status": "Active",
+				"linked_on": now_datetime(),
+				"expires_on": add_days(now_datetime(), settings.default_link_days)
+				if settings.default_link_days
+				else None,
+			}
+		)
+	logged = len(frappe.local.message_log)
 	try:
 		doc.save(ignore_permissions=True)
 	except (frappe.UniqueValidationError, frappe.DuplicateEntryError):
-		frappe.throw(_("This site is already linked to another student."))
+		del frappe.local.message_log[logged:]
+		holder = frappe.db.get_value(STUDENT_SITE, {"site": site}, "student")
+		if holder and holder != user:
+			frappe.throw(_("This site is already linked to another student."))
+		frappe.throw(_("Something went wrong while linking. Please try again."))
 	return doc.name

@@ -44,19 +44,33 @@ class TestLinking(IntegrationTestCase):
 		self.assertEqual(first, second)
 		self.assertEqual(frappe.db.get_value(STUDENT_SITE, first, "site"), "https://other.m.frappe.cloud")
 
-	def test_revoked_student_relinks_on_existing_row(self, post):
+	def test_relink_keeps_revocation(self, post):
 		first = linking.link_site(self.a, SITE)
-		frappe.db.set_value(STUDENT_SITE, first, {"status": "Revoked", "expires_on": "2020-01-01 00:00:00"})
-		second = linking.link_site(self.a, SITE)
+		frappe.db.set_value(STUDENT_SITE, first, {"status": "Revoked", "expires_on": "2030-01-01 00:00:00"})
+		second = linking.link_site(self.a, "https://other.m.frappe.cloud")
 		self.assertEqual(first, second)
 		self.assertEqual(frappe.db.count(STUDENT_SITE, {"student": self.a}), 1)
-		self.assertEqual(frappe.db.get_value(STUDENT_SITE, second, "status"), "Active")
+		row = frappe.db.get_value(STUDENT_SITE, second, ["status", "site", "expires_on"], as_dict=True)
+		self.assertEqual(row.status, "Revoked")
+		self.assertEqual(row.site, "https://other.m.frappe.cloud")
+		self.assertEqual(str(row.expires_on), "2030-01-01 00:00:00")
+
+	def test_relink_keeps_expiry(self, post):
+		first = linking.link_site(self.a, SITE)
+		frappe.db.set_value(STUDENT_SITE, first, "expires_on", "2020-01-01 00:00:00")
+		linking.link_site(self.a, SITE)
+		self.assertEqual(str(frappe.db.get_value(STUDENT_SITE, first, "expires_on")), "2020-01-01 00:00:00")
+
+	def _messages(self):
+		return [str(m) for m in frappe.local.message_log]
 
 	def test_second_student_cannot_link_same_site(self, post):
 		linking.link_site(self.a, SITE)
+		frappe.local.message_log = []
 		with self.assertRaises(frappe.ValidationError) as ctx:
 			linking.link_site(self.b, SITE)
 		self.assertIn("already linked", str(ctx.exception))
+		self.assertEqual(len(self._messages()), 1)
 
 	def test_unique_index_decides_a_race(self, post):
 		def other_student_links_first(site, method, payload):
@@ -67,11 +81,38 @@ class TestLinking(IntegrationTestCase):
 			return {"ok": True}
 
 		post.side_effect = other_student_links_first
+		frappe.local.message_log = []
 		with self.assertRaises(frappe.ValidationError) as ctx:
 			linking.link_site(self.b, SITE)
 		self.assertIn("already linked", str(ctx.exception))
+		self.assertEqual(len(self._messages()), 1)
+		self.assertNotIn("must be unique", " ".join(self._messages()))
 		self.assertNotIsInstance(ctx.exception, frappe.UniqueValidationError)
 		self.assertEqual(frappe.db.count(STUDENT_SITE, {"site": SITE}), 1)
+
+	def test_same_student_racing_gets_generic_message(self, post):
+		from frappe.utils import now_datetime
+
+		def racing_request_inserts_after_lookup():
+			frappe.get_doc(
+				{
+					"doctype": STUDENT_SITE,
+					"student": self.a,
+					"site": "https://x.m.frappe.cloud",
+					"status": "Active",
+				}
+			).db_insert()
+			return now_datetime()
+
+		frappe.local.message_log = []
+		with patch(
+			"erpnext_assignment_portal.linking.now_datetime", side_effect=racing_request_inserts_after_lookup
+		):
+			with self.assertRaises(frappe.ValidationError) as ctx:
+				linking.link_site(self.a, SITE)
+		self.assertIn("try again", str(ctx.exception))
+		self.assertNotIn("another student", str(ctx.exception))
+		self.assertEqual(len(self._messages()), 1)
 
 	def test_not_enrolled(self, post):
 		c = make_student("grader-c@example.com", enrolled=False)
