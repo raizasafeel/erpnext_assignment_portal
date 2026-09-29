@@ -6,7 +6,7 @@ from frappe import _
 from frappe.utils import get_datetime, now_datetime
 
 from erpnext_assignment_portal.access import is_expired, require_enrolled
-from erpnext_assignment_portal.constants import CHECK, CHECK_ERRORS, RUN, SECTION, STUDENT_SITE
+from erpnext_assignment_portal.constants import CHECK, CHECK_ERRORS, RUN, SECTION, SETTINGS, STUDENT_SITE
 from erpnext_assignment_portal.remote import RUN_CHECKS, RemoteError, post_signed
 
 STALE_MINUTES = 10
@@ -30,6 +30,7 @@ def start_run(user: str) -> str:
 		active = _active_run(site.last_run)
 		if active:
 			return active
+	_check_run_budget(user)
 	run = frappe.get_doc({"doctype": RUN, "student": user, "student_site": site.name, "status": "Queued"})
 	run.insert(ignore_permissions=True)
 	frappe.db.set_value(STUDENT_SITE, site.name, "last_run", run.name)
@@ -42,6 +43,15 @@ def start_run(user: str) -> str:
 		run_name=run.name,
 	)
 	return run.name
+
+
+def _check_run_budget(user: str) -> None:
+	limit = frappe.db.get_single_value(SETTINGS, "run_rate_limit_per_hour") or 10
+	since = now_datetime() - timedelta(hours=1)
+	if frappe.db.count(RUN, {"student": user, "creation": (">", since)}) >= limit:
+		frappe.throw(
+			_("You have reached the hourly run limit. Try again later."), frappe.RateLimitExceededError
+		)
 
 
 def _active_run(name: str) -> str | None:

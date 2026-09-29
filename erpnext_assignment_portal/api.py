@@ -1,11 +1,12 @@
 import frappe
 from frappe import _
-from frappe.rate_limiter import rate_limit
 
 from erpnext_assignment_portal import linking, runs
 from erpnext_assignment_portal.access import is_expired, require_enrolled
 from erpnext_assignment_portal.constants import RUN, RUN_RESULT, SETTINGS, STUDENT_SITE
 
+LINK_LIMIT = 10
+LINK_WINDOW_SECONDS = 60 * 60
 RUN_FIELDS = ["name", "status", "error_code", "started_on", "finished_on", "passed", "total"]
 
 
@@ -55,20 +56,27 @@ def get_run(run: str) -> dict:
 
 
 @frappe.whitelist(methods=["POST"])
-@rate_limit(limit=10, seconds=60 * 60)
 def link_site(site: str) -> dict:
 	require_enrolled(frappe.session.user)
+	_spend_link_attempt(frappe.session.user)
 	name = linking.link_site(frappe.session.user, site)
 	return {"site": frappe.db.get_value(STUDENT_SITE, name, "site")}
 
 
 @frappe.whitelist(methods=["POST"])
-@rate_limit(
-	limit=lambda: frappe.db.get_single_value(SETTINGS, "run_rate_limit_per_hour") or 10, seconds=60 * 60
-)
 def start_run() -> dict:
 	require_enrolled(frappe.session.user)
 	return {"run": runs.start_run(frappe.session.user)}
+
+
+def _spend_link_attempt(user: str) -> None:
+	cache = frappe.cache() if callable(frappe.cache) else frappe.cache
+	key = cache.make_key(f"grader-link-site:{user}")
+	count = cache.incrby(key, 1)
+	if count == 1:
+		cache.expire(key, LINK_WINDOW_SECONDS)
+	if count > LINK_LIMIT:
+		frappe.throw(_("Too many link attempts. Try again later."), frappe.RateLimitExceededError)
 
 
 def _run_dto(name: str) -> dict:
