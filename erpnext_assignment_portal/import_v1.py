@@ -81,11 +81,23 @@ def convert_entry(entry: dict) -> list[dict]:
 	return out
 
 
+def _split_notes(entry: dict) -> list[str]:
+	return [
+		f"{c.get('heading') or entry.get('title')} -> {len(c['match'])} checks"
+		for c in entry.get("checks", [])
+		if c.get("check_type") == "child_has_row" and len(c.get("match") or []) > 1
+	]
+
+
 def run(path: str) -> None:
-	with open(path) as f:  # nosemgrep -- admin-run import; the path comes from the bench operator
+	with open(path) as f:  # nosemgrep: frappe-security-file-traversal -- operator-supplied path
 		rows = json.load(f)
 	for row in rows:
-		checks, skipped = [], []
+		slug = row["name"].replace("&", "and")
+		if frappe.db.exists(SECTION, slug):
+			print(f"EXISTS {slug}")
+			continue
+		checks, skipped, splits = [], [], []
 		for entries in json.loads(row.get("checks") or "{}").values():
 			for entry in entries:
 				try:
@@ -96,8 +108,8 @@ def run(path: str) -> None:
 					skipped.append(f"{entry.get('title')}: {e}")
 				else:
 					checks += converted
-		slug = row["name"].replace("&", "and")
-		doc = frappe.get_doc(SECTION, slug) if frappe.db.exists(SECTION, slug) else frappe.new_doc(SECTION)
+					splits += _split_notes(entry)
+		doc = frappe.new_doc(SECTION)
 		doc.update(
 			{
 				"slug": slug,
@@ -110,10 +122,11 @@ def run(path: str) -> None:
 		doc.set("checks", [c | {"filters": json.dumps(c["filters"])} for c in checks])
 		doc.save()
 		print(f"{slug}: {len(checks)} checks")
+		for s in splits:
+			print(f"  SPLIT {slug} {s} (same-document requirement dropped)")
 		for s in skipped:
 			print(f"  SKIPPED {s}")
 		if not row.get("assignment_details"):
 			print("  DETAILS EMPTY: write them by hand")
 		if slug in MIXED_DETAILS:
 			print(f"  DETAILS MIXED: {MIXED_DETAILS[slug]}; split them by hand")
-	frappe.db.commit()  # nosemgrep: frappe-manual-commit -- one-off bench execute import; nothing else commits it

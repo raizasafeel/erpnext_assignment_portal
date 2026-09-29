@@ -1,6 +1,13 @@
+import json
+import os
+import tempfile
+from contextlib import redirect_stdout
+from io import StringIO
+
+import frappe
 from frappe.tests import IntegrationTestCase
 
-from erpnext_assignment_portal.import_v1 import convert_entry
+from erpnext_assignment_portal.import_v1 import convert_entry, run
 
 BOM = {
 	"doctype": "BOM",
@@ -135,3 +142,47 @@ class TestImportV1(IntegrationTestCase):
 				["address_type", "=", "Billing"],
 			],
 		)
+
+	def _run(self, rows):
+		with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+			json.dump(rows, f)
+		self.addCleanup(os.remove, f.name)
+		out = StringIO()
+		with redirect_stdout(out):
+			run(f.name)
+		return out.getvalue()
+
+	def _row(self):
+		entry = BOM | {
+			"checks": [
+				{
+					"check_type": "child_has_row",
+					"heading": "rows",
+					"table": "items",
+					"match": [{"item_code": "A"}, {"qty": 2}],
+				}
+			]
+		}
+		return {
+			"name": "zz-import-test",
+			"section": "ZZ Import Test",
+			"checks": json.dumps({"BOM": [entry]}),
+			"assignment_details": "hello",
+		}
+
+	def setUp(self):
+		frappe.db.delete("Grader Section", {"name": "zz-import-test"})
+
+	def test_split_line_printed(self):
+		out = self._run([self._row()])
+		self.assertIn("SPLIT zz-import-test rows -> 2 checks (same-document requirement dropped)", out)
+
+	def test_rerun_leaves_existing_section_untouched(self):
+		self._run([self._row()])
+		before = frappe.get_doc("Grader Section", "zz-import-test")
+		frappe.db.set_value("Grader Section", "zz-import-test", {"details": "<p>edited</p>", "published": 1})
+		out = self._run([self._row()])
+		self.assertIn("EXISTS zz-import-test", out)
+		after = frappe.get_doc("Grader Section", "zz-import-test")
+		self.assertEqual((after.details, after.published), ("<p>edited</p>", 1))
+		self.assertEqual([c.check_id for c in after.checks], [c.check_id for c in before.checks])
