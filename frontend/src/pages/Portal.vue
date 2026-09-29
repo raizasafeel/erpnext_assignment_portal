@@ -30,7 +30,7 @@
 					<Button
 						variant="solid"
 						:loading="grading"
-						:disabled="ctx.site.expired"
+						:disabled="siteBlocked"
 						:label="__('Re-check')"
 						@click="recheck"
 					/>
@@ -38,7 +38,12 @@
 			</div>
 		</PageHeader>
 		<div class="flex flex-col gap-4 p-4">
-			<RunAlert :run="run" :expired="ctx.site.expired" :still-running="stillRunning" />
+			<RunAlert
+				:run="run"
+				:expired="ctx.site.expired"
+				:revoked="ctx.site.revoked"
+				:still-running="stillRunning"
+			/>
 			<SectionPanel
 				v-if="current"
 				:section="current"
@@ -93,7 +98,7 @@
 					<Button
 						variant="solid"
 						:loading="grading"
-						:disabled="ctx.site.expired"
+						:disabled="siteBlocked"
 						:label="__('Re-check')"
 						@click="recheck"
 					/>
@@ -101,7 +106,12 @@
 			</div>
 		</PageHeader>
 		<div class="flex flex-col gap-4 p-6">
-			<RunAlert :run="run" :expired="ctx.site.expired" :still-running="stillRunning" />
+			<RunAlert
+				:run="run"
+				:expired="ctx.site.expired"
+				:revoked="ctx.site.revoked"
+				:still-running="stillRunning"
+			/>
 			<SectionPanel
 				v-if="current"
 				:section="current"
@@ -174,6 +184,7 @@ const mobileQuery = window.matchMedia(MOBILE_QUERY);
 const isMobile = ref(mobileQuery.matches);
 let pollTimer: ReturnType<typeof setTimeout> | undefined;
 
+const siteBlocked = computed(() => Boolean(ctx.value?.site?.expired || ctx.value?.site?.revoked));
 const scores = computed(() => sectionScores(sections.value, run.value));
 const current = computed(
 	() => sections.value.find((s) => s.slug === route.params.section) ?? sections.value[0]

@@ -25,6 +25,7 @@ def get_context() -> dict:
 			"status": site.status,
 			"expires_on": site.expires_on,
 			"expired": is_expired(site),
+			"revoked": site.status == "Revoked",
 		}
 		if site
 		else None,

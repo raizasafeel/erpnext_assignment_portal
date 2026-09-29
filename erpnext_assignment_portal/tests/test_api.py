@@ -58,6 +58,14 @@ class TestApi(IntegrationTestCase):
 			with self.subTest(fn=fn):
 				self.assertRaises(frappe.PermissionError, fn)
 
+	def test_context_reports_revoked_site(self):
+		frappe.set_user(self.b)
+		self.assertFalse(api.get_context()["site"]["revoked"])
+		frappe.db.set_value(STUDENT_SITE, {"student": self.b}, "status", "Revoked")
+		site = api.get_context()["site"]
+		self.assertTrue(site["revoked"])
+		self.assertEqual(set(site), {"site", "status", "expires_on", "expired", "revoked"})
+
 	def test_cannot_read_other_students_run(self):
 		frappe.set_user(self.a)
 		self.assertRaises(frappe.PermissionError, api.get_run, self.b_run)

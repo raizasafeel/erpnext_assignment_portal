@@ -1,6 +1,12 @@
 <template>
 	<Alert
-		v-if="expired"
+		v-if="revoked"
+		theme="red"
+		:title="__('Your site access was revoked')"
+		:description="__('Contact the course staff to restore it.')"
+	/>
+	<Alert
+		v-else-if="expired"
 		theme="amber"
 		:title="__('Your site link has expired')"
 		:description="__('Ask your instructor to extend it.')"
@@ -24,5 +30,5 @@ import { Alert } from "frappe-ui";
 import type { Run } from "../api";
 import { runErrorMessage } from "../lib/errors";
 
-defineProps<{ run: Run | null; expired: boolean; stillRunning: boolean }>();
+defineProps<{ run: Run | null; expired: boolean; revoked: boolean; stillRunning: boolean }>();
 </script>

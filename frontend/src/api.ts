@@ -30,7 +30,7 @@ export interface Run {
 export interface Context {
 	user: string
 	full_name: string
-	site: { site: string; status: string; expires_on: string | null; expired: boolean } | null
+	site: { site: string; status: string; expires_on: string | null; expired: boolean; revoked: boolean } | null
 	last_run: Run | null
 }
 

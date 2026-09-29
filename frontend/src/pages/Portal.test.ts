@@ -36,7 +36,7 @@ const run = (status: string) => ({
 })
 const context = (over = {}) => ({
 	user: "s@example.com", full_name: "S",
-	site: { site: "https://s.m.frappe.cloud", status: "Active", expires_on: null, expired: false },
+	site: { site: "https://s.m.frappe.cloud", status: "Active", expires_on: null, expired: false, revoked: false },
 	last_run: null, ...over,
 })
 
@@ -49,6 +49,8 @@ function render() {
 }
 
 const has = (w: ReturnType<typeof render>, name: string) => w.find(`[data-stub="${name}"]`).exists()
+const recheckButton = (w: ReturnType<typeof render>) =>
+	w.findAllComponents({ name: "Button" }).find((b) => b.vm.$attrs.label === "Re-check")!
 const stillRunning = (w: ReturnType<typeof render>) => w.findComponent({ name: "RunAlert" }).vm.$attrs["still-running"]
 
 describe("Portal", () => {
@@ -151,5 +153,25 @@ describe("Portal", () => {
 		await flushPromises()
 		expect(toast.success).toHaveBeenCalledOnce()
 		expect(api.getRun).toHaveBeenCalledTimes(1)
+	})
+
+	it.each([
+		["revoked", { revoked: true, expired: false }],
+		["expired", { revoked: false, expired: true }],
+	])("blocks Re-check when the site is %s", async (_, state) => {
+		const base = context().site
+		api.getContext.mockResolvedValue(context({ site: { ...base, ...state } }))
+		const w = render()
+		await flushPromises()
+		const alert = w.findComponent({ name: "RunAlert" }).vm.$attrs
+		expect([alert.revoked, alert.expired]).toEqual([state.revoked, state.expired])
+		expect(recheckButton(w).vm.$attrs.disabled).toBe(true)
+	})
+
+	it("allows Re-check for an active site", async () => {
+		api.getContext.mockResolvedValue(context())
+		const w = render()
+		await flushPromises()
+		expect(recheckButton(w).vm.$attrs.disabled).toBe(false)
 	})
 })
