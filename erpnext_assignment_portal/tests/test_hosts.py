@@ -10,6 +10,7 @@ class TestHosts(IntegrationTestCase):
 	def setUp(self):
 		self.addCleanup(frappe.db.rollback)
 
+	# Review focus 3: slash, case, :443 and trailing-dot variants map to one site (commit 0f1227e).
 	def test_canonical_site_variants(self):
 		for url in (
 			"https://Rza.m.frappe.cloud",
@@ -21,6 +22,7 @@ class TestHosts(IntegrationTestCase):
 			with self.subTest(url=url):
 				self.assertEqual(canonical_site(url, P), "https://rza.m.frappe.cloud")
 
+	# Regression: backslash host reached evil.com (Task 5 review, commit 96fb784).
 	def test_refused(self):
 		for url in (
 			"http://rza.m.frappe.cloud",

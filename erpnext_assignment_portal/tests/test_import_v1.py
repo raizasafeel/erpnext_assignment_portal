@@ -173,10 +173,12 @@ class TestImportV1(IntegrationTestCase):
 	def setUp(self):
 		frappe.db.delete("Grader Section", {"name": "zz-import-test"})
 
+	# Regression: a split v1 check was converted silently (commit b3f8cfb).
 	def test_split_line_printed(self):
 		out = self._run([self._row()])
 		self.assertIn("SPLIT zz-import-test rows -> 2 checks (same-document requirement dropped)", out)
 
+	# Regression: re-running the import overwrote edited sections (commit b3f8cfb).
 	def test_rerun_leaves_existing_section_untouched(self):
 		self._run([self._row()])
 		before = frappe.get_doc("Grader Section", "zz-import-test")

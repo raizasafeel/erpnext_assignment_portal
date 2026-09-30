@@ -15,11 +15,11 @@ class TestApi(IntegrationTestCase):
 		self.a = make_student("grader-api-a@example.com")
 		self.b = make_student("grader-api-b@example.com")
 		self.outsider = make_student("grader-api-x@example.com", enrolled=False)
-		frappe.db.delete(SECTION)
+		frappe.db.set_value(SECTION, {"published": 1}, "published", 0)
 		frappe.get_doc(
 			{
 				"doctype": SECTION,
-				"slug": "s",
+				"slug": "probe-api-section",
 				"title": "S",
 				"published": 1,
 				"checks": [
@@ -58,6 +58,7 @@ class TestApi(IntegrationTestCase):
 			with self.subTest(fn=fn):
 				self.assertRaises(frappe.PermissionError, fn)
 
+	# Regression: a revoked site read as expired and Re-check stayed enabled (commit 4da83d9).
 	def test_context_reports_revoked_site(self):
 		frappe.set_user(self.b)
 		self.assertFalse(api.get_context()["site"]["revoked"])
@@ -66,6 +67,7 @@ class TestApi(IntegrationTestCase):
 		self.assertTrue(site["revoked"])
 		self.assertEqual(set(site), {"site", "status", "expires_on", "expired", "revoked"})
 
+	# Regression: an errored re-check wiped the last graded results (commit 20a87b3).
 	def test_context_keeps_last_done_run_after_error(self):
 		frappe.set_user("Administrator")
 		site = frappe.db.get_value(STUDENT_SITE, {"student": self.b})
@@ -115,6 +117,7 @@ class TestApi(IntegrationTestCase):
 		cache = frappe.cache
 		cache.delete(cache.make_key(f"grader-link-site:{user}"))
 
+	# Regression: link_site was rate limited per IP, not per student (commit 4cfbffe).
 	@patch("erpnext_assignment_portal.api.linking.link_site", return_value="x")
 	def test_link_site_limited_per_user(self, link):
 		self.clear_link_counter(self.a)
@@ -130,6 +133,7 @@ class TestApi(IntegrationTestCase):
 		api.link_site("https://b.m.frappe.cloud")
 		self.assertEqual(link.call_count, 11)
 
+	# Regression: a counter left without a TTL never expired and blocked linking for good (commit 317245e).
 	def test_link_counter_without_ttl_gets_one(self):
 		cache = frappe.cache
 		key = cache.make_key(f"grader-link-site:{self.a}")
@@ -139,6 +143,7 @@ class TestApi(IntegrationTestCase):
 		api._spend_link_attempt(self.a)
 		self.assertGreater(cache.ttl(key), 0)
 
+	# Regression: a non-enrolled user spent the link budget before the enrolment check (commit 4cfbffe).
 	@patch("erpnext_assignment_portal.api.linking.link_site", return_value="x")
 	def test_outsider_does_not_spend_link_budget(self, link):
 		self.clear_link_counter(self.outsider)
@@ -155,13 +160,14 @@ class TestApi(IntegrationTestCase):
 			{
 				"doctype": STUDENT_SITE,
 				"student": user,
-				"site": f"https://{frappe.generate_hash(length=8)}.m.frappe.cloud",
+				"site": f"https://{user.split('@')[0]}.m.frappe.cloud",
 			}
 		).insert()
 
 	def finish_runs(self, user):
 		frappe.db.set_value(RUN, {"student": user}, "status", "Done")
 
+	# Regression: start_run was rate limited per IP, not per student (commit 4cfbffe).
 	def test_start_run_limited_per_student(self):
 		frappe.db.set_single_value(SETTINGS, "run_rate_limit_per_hour", 2)
 		self.link_student(self.a)
@@ -172,12 +178,11 @@ class TestApi(IntegrationTestCase):
 				self.finish_runs(self.a)
 			self.assertRaises(frappe.RateLimitExceededError, api.start_run)
 			self.assertEqual(frappe.db.count(RUN, {"student": self.a}), 2)
-			frappe.set_user("Administrator")
-			self.link_student("Administrator") if False else None
 			frappe.set_user(self.b)
 			frappe.db.delete(RUN, {"student": self.b})
 			api.start_run()
 
+	# Regression: returning the active run still spent the hourly budget (commit 4cfbffe).
 	def test_deduped_active_run_does_not_count(self):
 		frappe.db.set_single_value(SETTINGS, "run_rate_limit_per_hour", 1)
 		self.link_student(self.a)
@@ -187,6 +192,7 @@ class TestApi(IntegrationTestCase):
 			self.assertEqual(api.start_run()["run"], first)
 			self.assertEqual(api.start_run()["run"], first)
 
+	# Regression: a non-enrolled user created runs before the enrolment check (commit 4cfbffe).
 	def test_outsider_does_not_spend_run_budget(self):
 		frappe.set_user(self.outsider)
 		self.assertRaises(frappe.PermissionError, api.start_run)

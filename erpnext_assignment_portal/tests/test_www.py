@@ -9,6 +9,7 @@ class TestPortalPage(IntegrationTestCase):
 		self.addCleanup(frappe.set_user, frappe.session.user)
 		self.addCleanup(frappe.local.flags.pop, "redirect_location", None)
 
+	# Regression: a guest got the SPA shell instead of the login page (commit 4945a01).
 	def test_guest_is_redirected_to_login(self):
 		frappe.set_user("Guest")
 		with self.assertRaises(frappe.Redirect):

@@ -26,6 +26,7 @@ class TestDoctypes(IntegrationTestCase):
 		s.save()
 		self.assertEqual(s.checks[0].check_id, check_id)
 
+	# Regression: two checks with one check_id broke every run with bad_response (commit 317245e).
 	def test_duplicated_check_ids_are_regenerated(self):
 		s = self.make_section([["name", "=", "x"]])
 		s.append("checks", {"title": "copy", "target_doctype": "Warehouse", "filters": "[]"})
@@ -36,6 +37,7 @@ class TestDoctypes(IntegrationTestCase):
 		self.assertEqual(s.checks[0].check_id, first)
 		self.assertNotEqual(s.checks[1].check_id, first)
 
+	# Regression: a check copied into another section kept its check_id (commit 317245e).
 	def test_check_id_copied_from_another_section_is_regenerated(self):
 		original = self.make_section([["name", "=", "x"]]).insert()
 		copy = frappe.copy_doc(original)
@@ -45,6 +47,7 @@ class TestDoctypes(IntegrationTestCase):
 		self.assertTrue(copy.checks[0].check_id)
 		self.assertNotEqual(copy.checks[0].check_id, original.checks[0].check_id)
 
+	# Review S3: check_id uniqueness lived only in Python, so concurrent saves could both pass (commit bd0f9e4).
 	def test_check_id_is_unique_at_the_db(self):
 		self.assertTrue(frappe.get_meta("Grader Check").get_field("check_id").unique)
 		a = self.make_section([["name", "=", "x"]]).insert()
@@ -55,23 +58,27 @@ class TestDoctypes(IntegrationTestCase):
 			frappe.db.set_value("Grader Check", b.checks[0].name, "check_id", a.checks[0].check_id)
 		self.assertTrue(frappe.db.is_duplicate_entry(ctx.exception))
 
+	# Review S4: every page load and Re-check filtered Grader Run on an unindexed student (commit bd0f9e4).
 	def test_student_is_indexed_on_run(self):
 		self.assertTrue(frappe.get_meta("Grader Run").get_field("student").search_index)
 
+	# Regression: Duplicate copied check_ids into the new section (commit 317245e).
 	def test_check_id_is_no_copy(self):
 		self.assertTrue(frappe.get_meta("Grader Check").get_field("check_id").no_copy)
 
 	def test_filter_shape_is_validated(self):
-		for bad in (
-			'"x"',
-			'[["name"]]',
-			'[["name","regexp","x"]]',
-			'[["name","is","maybe"]]',
-			'[["name","in","x"]]',
+		for i, bad in enumerate(
+			(
+				'"x"',
+				'[["name"]]',
+				'[["name","regexp","x"]]',
+				'[["name","is","maybe"]]',
+				'[["name","in","x"]]',
+			)
 		):
 			with self.subTest(bad=bad):
 				doc = self.make_section(bad)
-				doc.slug = frappe.generate_hash(length=8)
+				doc.slug = f"probe-bad-filter-{i}"
 				self.assertRaises(frappe.ValidationError, doc.insert)
 
 	def test_slug_cannot_change(self):
@@ -79,10 +86,7 @@ class TestDoctypes(IntegrationTestCase):
 		s.slug = "probe-slug-lock"
 		s.insert()
 		s.slug = "other"
-		try:
-			s.save()
-		except frappe.CannotChangeConstantError:
-			pass
+		s.save()
 		self.assertEqual(frappe.db.get_value(SECTION, "probe-slug-lock", "slug"), "probe-slug-lock")
 		self.assertFalse(frappe.db.exists(SECTION, "other"))
 
@@ -90,12 +94,14 @@ class TestDoctypes(IntegrationTestCase):
 		self.assertTrue(frappe.db.exists("Role", ROLE))
 		self.assertIn("*.m.frappe.cloud", frappe.get_single(SETTINGS).host_patterns())
 
+	# Review S5: a blank minimum saved as 0 and made the check a free pass (commit bd0f9e4).
 	def test_blank_min_defaults_to_one(self):
 		s = self.make_section([["name", "=", "x"]])
 		s.checks[0].expected_min = None
 		s.insert()
 		self.assertEqual(s.checks[0].expected_min, 1)
 
+	# Review S5: a negative minimum or min > max saved and could never pass (commit bd0f9e4).
 	def test_bounds_are_validated(self):
 		for low, high in ((-1, 0), (5, 2)):
 			with self.subTest(low=low, high=high):
@@ -113,6 +119,7 @@ class TestDoctypes(IntegrationTestCase):
 		s.checks[0].expected_max = 2
 		s.save()
 
+	# Review S2: publishing check 301 made every run fail as rejected (commit bd0f9e4).
 	def test_published_checks_are_capped(self):
 		def build(slug, count, published):
 			s = self.make_section([["name", "=", "x"]])

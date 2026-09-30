@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 import frappe
 from frappe.tests import IntegrationTestCase
+from frappe.utils import now_datetime
 
 from erpnext_assignment_portal import linking
 from erpnext_assignment_portal.constants import STUDENT_SITE
@@ -44,6 +45,7 @@ class TestLinking(IntegrationTestCase):
 		self.assertEqual(first, second)
 		self.assertEqual(frappe.db.get_value(STUDENT_SITE, first, "site"), "https://other.m.frappe.cloud")
 
+	# Regression: re-linking a revoked student reset the row to Active (commit 9184bb0).
 	def test_relink_keeps_revocation(self, post):
 		first = linking.link_site(self.a, SITE)
 		frappe.db.set_value(STUDENT_SITE, first, {"status": "Revoked", "expires_on": "2030-01-01 00:00:00"})
@@ -55,6 +57,7 @@ class TestLinking(IntegrationTestCase):
 		self.assertEqual(row.site, "https://other.m.frappe.cloud")
 		self.assertEqual(str(row.expires_on), "2030-01-01 00:00:00")
 
+	# Regression: re-linking reset expires_on (commit 9184bb0).
 	def test_relink_keeps_expiry(self, post):
 		first = linking.link_site(self.a, SITE)
 		frappe.db.set_value(STUDENT_SITE, first, "expires_on", "2020-01-01 00:00:00")
@@ -64,6 +67,7 @@ class TestLinking(IntegrationTestCase):
 	def _messages(self):
 		return [str(m) for m in frappe.local.message_log]
 
+	# Review focus 4: a second student linking a linked site gets one clean message, not a 500 (commit ce03823).
 	def test_second_student_cannot_link_same_site(self, post):
 		linking.link_site(self.a, SITE)
 		frappe.local.message_log = []
@@ -72,6 +76,7 @@ class TestLinking(IntegrationTestCase):
 		self.assertIn("already linked", str(ctx.exception))
 		self.assertEqual(len(self._messages()), 1)
 
+	# Review focus 4: past every pre-check, the unique index decides a race (commit ce03823).
 	def test_unique_index_decides_a_race(self, post):
 		def other_student_links_first(site, method, payload):
 			# db_insert skips every controller check, as a concurrent request's commit would.
@@ -90,9 +95,8 @@ class TestLinking(IntegrationTestCase):
 		self.assertNotIsInstance(ctx.exception, frappe.UniqueValidationError)
 		self.assertEqual(frappe.db.count(STUDENT_SITE, {"site": SITE}), 1)
 
+	# Regression: a same-student race showed "must be unique" next to the real error (commit 9184bb0).
 	def test_same_student_racing_gets_generic_message(self, post):
-		from frappe.utils import now_datetime
-
 		def racing_request_inserts_after_lookup():
 			frappe.get_doc(
 				{

@@ -75,6 +75,7 @@ class TestRemote(IntegrationTestCase):
 					self.call()
 				self.assertEqual(ctx.exception.code, "bad_response")
 
+	# Regression: a reset or timeout while reading the body escaped unmapped (commit a8cbc87).
 	def test_read_failures_map_to_codes(self, sign):
 		cases = {
 			"timeout": urllib3.exceptions.ReadTimeoutError(None, "u", "t"),
@@ -92,6 +93,7 @@ class TestRemote(IntegrationTestCase):
 					self.call()
 				self.assertEqual(ctx.exception.code, code)
 
+	# Regression: the client signed and sent to any site it was handed (commit a8cbc87).
 	@patch("erpnext_assignment_portal.remote.requests.post")
 	def test_site_outside_patterns_makes_no_request(self, post, sign):
 		for site in ("https://evil.example.com", "https://RZA.m.frappe.cloud/", "http://rza.m.frappe.cloud"):
@@ -101,6 +103,7 @@ class TestRemote(IntegrationTestCase):
 		post.assert_not_called()
 		sign.assert_not_called()
 
+	# Regression: a missing or bad signing key raised out of the run instead of ending it as internal (commit 317245e).
 	@patch("erpnext_assignment_portal.remote.requests.post")
 	def test_signing_failure_maps_to_internal(self, post, sign):
 		for error in (frappe.ValidationError("no key"), ValueError("bad pem"), TypeError("not ed25519")):

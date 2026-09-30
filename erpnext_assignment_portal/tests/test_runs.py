@@ -15,11 +15,11 @@ class TestRuns(IntegrationTestCase):
 	def setUp(self):
 		self.addCleanup(frappe.db.rollback)
 		ensure_settings()
-		frappe.db.delete(SECTION)
+		frappe.db.set_value(SECTION, {"published": 1}, "published", 0)
 		self.section = frappe.get_doc(
 			{
 				"doctype": SECTION,
-				"slug": "wh",
+				"slug": "probe-runs-wh",
 				"title": "Warehouses",
 				"published": 1,
 				"checks": [
@@ -53,6 +53,7 @@ class TestRuns(IntegrationTestCase):
 		self.enqueue.assert_called_once()
 		self.assertEqual(self.enqueue.call_args.kwargs["job_id"], f"grader-run::{first}")
 
+	# Review focus 2: a run stuck in Running must not block the student forever (commit 9d88e04).
 	def test_stale_run_is_replaced(self):
 		first = runs.start_run(self.user)
 		frappe.db.set_value(RUN, first, "creation", now_datetime() - timedelta(minutes=11))
@@ -118,6 +119,7 @@ class TestRuns(IntegrationTestCase):
 			runs.execute_run(name)
 		self.assertEqual(frappe.db.get_value(RUN, name, ["status", "error_code"]), ("Error", "rejected"))
 
+	# Review focus 5: a check edited mid-run must not change that run's result (commit 9d88e04).
 	def test_evaluates_against_sent_snapshot(self):
 		name = runs.start_run(self.user)
 
@@ -134,6 +136,7 @@ class TestRuns(IntegrationTestCase):
 			runs.execute_run(name)
 		self.assertEqual(frappe.db.get_value(RUN, name, "passed"), 2)
 
+	# Regression: an unexpected exception left the run in Running forever (commit db6b446).
 	def test_unexpected_failure_ends_in_internal_error(self):
 		name = runs.start_run(self.user)
 		real_finish = runs._finish
