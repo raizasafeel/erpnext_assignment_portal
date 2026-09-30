@@ -12,18 +12,7 @@ SCALARS = (str, int, float)
 
 class GraderSection(Document):
 	def validate(self) -> None:
-		ids = [c.check_id for c in self.checks if c.check_id]
-		taken = set(
-			frappe.get_all(
-				CHECK,
-				filters={
-					"parenttype": SECTION,
-					"parent": ["!=", self.name or ""],
-					"check_id": ["in", ids or [""]],
-				},
-				pluck="check_id",
-			)
-		)
+		taken = self.check_ids_in_other_sections()
 		for check in self.checks:
 			if not check.check_id or check.check_id in taken:
 				check.check_id = frappe.generate_hash(length=16)
@@ -32,6 +21,11 @@ class GraderSection(Document):
 			validate_bounds(check)
 		if self.published:
 			self.validate_check_limit()
+
+	def check_ids_in_other_sections(self) -> set[str]:
+		ids = [c.check_id for c in self.checks if c.check_id]
+		filters = {"parenttype": SECTION, "parent": ["!=", self.name or ""], "check_id": ["in", ids or [""]]}
+		return set(frappe.get_all(CHECK, filters=filters, pluck="check_id"))
 
 	def validate_check_limit(self) -> None:
 		others = frappe.get_all(

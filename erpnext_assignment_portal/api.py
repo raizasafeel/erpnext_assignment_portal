@@ -17,20 +17,17 @@ def get_context() -> dict:
 	site = frappe.db.get_value(
 		STUDENT_SITE, {"student": user}, ["name", "site", "status", "expires_on", "last_run"], as_dict=True
 	)
+	last_run = _run_dto(site.last_run) if site and site.last_run else None
+	if last_run and last_run["status"] == "Done":
+		last_done_run = last_run
+	else:
+		last_done_run = _last_done_run(user, site.name) if site else None
 	return {
 		"user": user,
 		"full_name": frappe.db.get_value("User", user, "full_name"),
-		"site": {
-			"site": site.site,
-			"status": site.status,
-			"expires_on": site.expires_on,
-			"expired": is_expired(site),
-			"revoked": site.status == "Revoked",
-		}
-		if site
-		else None,
-		"last_run": _run_dto(site.last_run) if site and site.last_run else None,
-		"last_done_run": _last_done_run(user, site.name) if site else None,
+		"site": _site_dto(site) if site else None,
+		"last_run": last_run,
+		"last_done_run": last_done_run,
 	}
 
 
@@ -67,7 +64,6 @@ def link_site(site: str) -> dict:
 
 @frappe.whitelist(methods=["POST"])
 def start_run() -> dict:
-	require_enrolled(frappe.session.user)
 	return {"run": runs.start_run(frappe.session.user)}
 
 
@@ -79,6 +75,16 @@ def _spend_link_attempt(user: str) -> None:
 		cache.expire(key, LINK_WINDOW_SECONDS)
 	if count > LINK_LIMIT:
 		frappe.throw(_("Too many link attempts. Try again later."), frappe.RateLimitExceededError)
+
+
+def _site_dto(site: dict) -> dict:
+	return {
+		"site": site.site,
+		"status": site.status,
+		"expires_on": site.expires_on,
+		"expired": is_expired(site),
+		"revoked": site.status == "Revoked",
+	}
 
 
 def _last_done_run(user: str, student_site: str) -> dict | None:

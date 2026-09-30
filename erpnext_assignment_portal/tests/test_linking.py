@@ -110,11 +110,6 @@ class TestLinking(IntegrationTestCase):
 		):
 			with self.assertRaises(frappe.ValidationError) as ctx:
 				linking.link_site(self.a, SITE)
-		self.assertIn("try again", str(ctx.exception))
+		self.assertIn("Try again", str(ctx.exception))
 		self.assertNotIn("another student", str(ctx.exception))
 		self.assertEqual(len(self._messages()), 1)
-
-	def test_not_enrolled(self, post):
-		c = make_student("grader-c@example.com", enrolled=False)
-		self.assertRaises(frappe.PermissionError, linking.link_site, c, SITE)
-		post.assert_not_called()

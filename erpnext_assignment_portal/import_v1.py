@@ -39,43 +39,51 @@ def _check(entry: dict, title: str, filters: list) -> dict:
 	return {"title": title, "target_doctype": entry["doctype"], "filters": filters, "expected_min": 1}
 
 
+def _match(entry: dict, check: dict, title: str) -> list[dict]:
+	extra = [
+		[f, "in" if isinstance(v, list) else "=", v]
+		for pair in check.get("fields_to_match") or []
+		for f, v in pair.items()
+	]
+	return [_check(entry, title, _base(entry) + extra)]
+
+
+def _field_exists(entry: dict, check: dict, title: str) -> list[dict]:
+	fields = [[f, "is", "set"] for f in check.get("fields_to_match") or []]
+	return [_check(entry, title, _base(entry) + fields)]
+
+
+def _child_filter(table: str, field: str, value) -> list:
+	if isinstance(value, str):
+		return [f"{table}.{field}", "like", f"%{value}%"]
+	return [f"{table}.{field}", "=", value]
+
+
+def _child_has_row(entry: dict, check: dict, title: str) -> list[dict]:
+	table = check.get("table", "rows")
+	base = _base({"filter": check.get("filter") or entry.get("filter"), "name": entry.get("name")})
+	matches = check.get("match") or [{}]
+	out = []
+	for i, match in enumerate(matches, 1):
+		child = [_child_filter(table, f, v) for f, v in match.items()]
+		label = title if len(matches) == 1 else f"{title} ({i})"
+		out.append(_check(entry, label, base + (child or [[f"{table}.name", "is", "set"]])))
+	return out
+
+
 def convert_entry(entry: dict) -> list[dict]:
 	out = []
 	for check in entry.get("checks", []):
 		kind = check.get("check_type")
 		title = check.get("heading") or entry.get("title") or entry["doctype"]
 		if kind == "match":
-			extra = [
-				[f, "in" if isinstance(v, list) else "=", v]
-				for pair in check.get("fields_to_match") or []
-				for f, v in pair.items()
-			]
-			out.append(_check(entry, title, _base(entry) + extra))
+			out += _match(entry, check, title)
 		elif kind == "field_exists":
-			out.append(
-				_check(
-					entry,
-					title,
-					_base(entry) + [[f, "is", "set"] for f in check.get("fields_to_match") or []],
-				)
-			)
+			out += _field_exists(entry, check, title)
 		elif kind == "exists_with_filter":
 			out.append(_check(entry, title, normalise_filters(check.get("filter"))))
 		elif kind == "child_has_row":
-			table = check.get("table", "rows")
-			base = _base({"filter": check.get("filter") or entry.get("filter"), "name": entry.get("name")})
-			matches = check.get("match") or [{}]
-			for i, match in enumerate(matches, 1):
-				child = [
-					[
-						f"{table}.{f}",
-						"like" if isinstance(v, str) else "=",
-						f"%{v}%" if isinstance(v, str) else v,
-					]
-					for f, v in match.items()
-				]
-				label = title if len(matches) == 1 else f"{title} ({i})"
-				out.append(_check(entry, label, base + (child or [[f"{table}.name", "is", "set"]])))
+			out += _child_has_row(entry, check, title)
 		else:
 			raise ValueError(f"unknown check_type {kind!r}")
 	return out
@@ -89,6 +97,49 @@ def _split_notes(entry: dict) -> list[str]:
 	]
 
 
+def _converted_and_validated(entry: dict) -> list[dict]:
+	converted = convert_entry(entry)
+	for c in converted:
+		validate_filters(c["filters"], c["title"])
+	return converted
+
+
+def _convert_row(row: dict) -> tuple[list, list, list]:
+	checks, skipped, splits = [], [], []
+	entries = [entry for group in json.loads(row.get("checks") or "{}").values() for entry in group]
+	for entry in entries:
+		try:
+			converted = _converted_and_validated(entry)
+		except (KeyError, ValueError, frappe.ValidationError) as e:
+			skipped.append(f"{entry.get('title')}: {e}")
+			continue
+		checks += converted
+		splits += _split_notes(entry)
+	return checks, skipped, splits
+
+
+def _insert_section(row: dict, slug: str, checks: list) -> None:
+	doc = frappe.new_doc(SECTION)
+	doc.update(
+		{
+			"slug": slug,
+			"title": row["section"],
+			"order": row.get("section_order") or 0,
+			"published": row.get("published") or 0,
+			"details": md_to_html(row.get("assignment_details") or ""),
+		}
+	)
+	doc.set("checks", [c | {"filters": json.dumps(c["filters"])} for c in checks])
+	doc.save()
+
+
+def _print_detail_warnings(row: dict, slug: str) -> None:
+	if not row.get("assignment_details"):
+		print("  DETAILS EMPTY: write them by hand")
+	if slug in MIXED_DETAILS:
+		print(f"  DETAILS MIXED: {MIXED_DETAILS[slug]}; split them by hand")
+
+
 def run(path: str) -> None:
 	with open(path) as f:  # nosemgrep: frappe-security-file-traversal -- operator-supplied path
 		rows = json.load(f)
@@ -97,36 +148,11 @@ def run(path: str) -> None:
 		if frappe.db.exists(SECTION, slug):
 			print(f"EXISTS {slug}")
 			continue
-		checks, skipped, splits = [], [], []
-		for entries in json.loads(row.get("checks") or "{}").values():
-			for entry in entries:
-				try:
-					converted = convert_entry(entry)
-					for c in converted:
-						validate_filters(c["filters"], c["title"])
-				except (KeyError, ValueError, frappe.ValidationError) as e:
-					skipped.append(f"{entry.get('title')}: {e}")
-				else:
-					checks += converted
-					splits += _split_notes(entry)
-		doc = frappe.new_doc(SECTION)
-		doc.update(
-			{
-				"slug": slug,
-				"title": row["section"],
-				"order": row.get("section_order") or 0,
-				"published": row.get("published") or 0,
-				"details": md_to_html(row.get("assignment_details") or ""),
-			}
-		)
-		doc.set("checks", [c | {"filters": json.dumps(c["filters"])} for c in checks])
-		doc.save()
+		checks, skipped, splits = _convert_row(row)
+		_insert_section(row, slug, checks)
 		print(f"{slug}: {len(checks)} checks")
 		for s in splits:
 			print(f"  SPLIT {slug} {s} (same-document requirement dropped)")
 		for s in skipped:
 			print(f"  SKIPPED {s}")
-		if not row.get("assignment_details"):
-			print("  DETAILS EMPTY: write them by hand")
-		if slug in MIXED_DETAILS:
-			print(f"  DETAILS MIXED: {MIXED_DETAILS[slug]}; split them by hand")
+		_print_detail_warnings(row, slug)

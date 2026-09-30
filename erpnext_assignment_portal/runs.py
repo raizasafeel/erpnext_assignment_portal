@@ -15,19 +15,9 @@ MAX_COUNT = 1000
 
 def start_run(user: str) -> str:
 	require_enrolled(user)
-	site = frappe.db.get_value(
-		STUDENT_SITE,
-		{"student": user},
-		["name", "status", "expires_on", "last_run"],
-		as_dict=True,
-		for_update=True,
-	)
-	if not site:
-		frappe.throw(_("Link your trial site first."))
-	if site.status != "Active" or is_expired(site):
-		frappe.throw(_("Your site link has expired. Contact your instructor to extend it."))
+	site = _runnable_site(user)
 	if site.last_run:
-		active = _active_run(site.last_run)
+		active = _active_run_or_expire_stale(site.last_run)
 		if active:
 			return active
 	_check_run_budget(user)
@@ -45,6 +35,23 @@ def start_run(user: str) -> str:
 	return run.name
 
 
+def _runnable_site(user: str) -> dict:
+	site = frappe.db.get_value(
+		STUDENT_SITE,
+		{"student": user},
+		["name", "status", "expires_on", "last_run"],
+		as_dict=True,
+		for_update=True,
+	)
+	if not site:
+		frappe.throw(_("Link your trial site first."))
+	if site.status == "Revoked":
+		frappe.throw(_("Your site access was revoked. Contact the course staff to restore it."))
+	if site.status != "Active" or is_expired(site):
+		frappe.throw(_("Your site link has expired. Contact your instructor to extend it."))
+	return site
+
+
 def _check_run_budget(user: str) -> None:
 	limit = frappe.db.get_single_value(SETTINGS, "run_rate_limit_per_hour") or 10
 	since = now_datetime() - timedelta(hours=1)
@@ -54,7 +61,7 @@ def _check_run_budget(user: str) -> None:
 		)
 
 
-def _active_run(name: str) -> str | None:
+def _active_run_or_expire_stale(name: str) -> str | None:
 	run = frappe.db.get_value(RUN, name, ["status", "creation"], as_dict=True)
 	if not run or run.status not in ("Queued", "Running"):
 		return None
@@ -136,26 +143,16 @@ def evaluate(sent: list, results) -> list[dict]:
 
 
 def _row(check, result: dict) -> dict:
-	row = {
-		"section": check.section,
-		"check_id": check.check_id,
-		"found_count": 0,
-		"check_error": None,
-		"passed": 0,
-	}
+	row = {"section": check.section, "check_id": check.check_id}
 	if "error" in result:
 		if result["error"] not in CHECK_ERRORS:
 			raise RemoteError("bad_response")
-		row["check_error"] = result["error"]
-		return row
+		return row | {"found_count": 0, "check_error": result["error"], "passed": 0}
 	count = result.get("found_count")
 	if not isinstance(count, int) or isinstance(count, bool) or not 0 <= count <= MAX_COUNT:
 		raise RemoteError("bad_response")
-	row["found_count"] = count
-	row["passed"] = int(
-		count >= check.expected_min and (not check.expected_max or count <= check.expected_max)
-	)
-	return row
+	passed = count >= check.expected_min and (not check.expected_max or count <= check.expected_max)
+	return row | {"found_count": count, "check_error": None, "passed": int(passed)}
 
 
 def _finish(run, rows: list | None = None, error_code: str | None = None) -> None:

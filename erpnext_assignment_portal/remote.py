@@ -21,47 +21,61 @@ class RemoteError(Exception):
 
 
 def post_signed(site: str, method: str, payload: dict) -> dict:
-	try:
-		if canonical_site(site, frappe.get_single(SETTINGS).host_patterns()) != site:
-			raise RemoteError("rejected")
-	except frappe.ValidationError:
-		raise RemoteError("rejected")
+	_require_allowed(site)
 	host = urlparse(site).hostname
 	path = f"/api/method/{method}"
 	body = json.dumps(payload, separators=(",", ":")).encode()
+	headers = {"Content-Type": "application/json", "Accept-Encoding": "identity", **_sign(host, path, body)}
+	return _message(_post(f"https://{host}{path}", body, headers))
+
+
+def _require_allowed(site: str) -> None:
 	try:
-		signature_headers = sign(host, path, body)
+		allowed = canonical_site(site, frappe.get_cached_doc(SETTINGS).host_patterns()) == site
+	except frappe.ValidationError:
+		allowed = False
+	if not allowed:
+		raise RemoteError("rejected")
+
+
+def _sign(host: str, path: str, body: bytes) -> dict[str, str]:
+	try:
+		return sign(host, path, body)
 	except Exception:
 		frappe.log_error("Grader request signing failed")
 		raise RemoteError("internal")
-	headers = {"Content-Type": "application/json", "Accept-Encoding": "identity", **signature_headers}
+
+
+def _post(url: str, body: bytes, headers: dict) -> bytes:
 	try:
 		response = requests.post(
-			f"https://{host}{path}",
-			data=body,
-			headers=headers,
-			timeout=(5, 30),
-			allow_redirects=False,
-			stream=True,
+			url, data=body, headers=headers, timeout=(5, 30), allow_redirects=False, stream=True
 		)
 	except requests.Timeout:
 		raise RemoteError("timeout")
 	except requests.RequestException:
 		raise RemoteError("unreachable")
 	with response:
-		# frappe answers a method that isn't installed with 417 (handler.execute_cmd), not 404.
-		if response.status_code == 417:
-			raise RemoteError("not_installed")
-		if response.status_code == 403:
-			raise RemoteError("rejected")
-		if response.status_code != 200:
-			raise RemoteError("bad_response")
+		_check_status(response.status_code)
 		try:
-			raw = response.raw.read(MAX_RESPONSE_BYTES + 1)
+			return response.raw.read(MAX_RESPONSE_BYTES + 1)
 		except ReadTimeoutError:
 			raise RemoteError("timeout")
 		except (HTTPError, requests.RequestException):
 			raise RemoteError("unreachable")
+
+
+def _check_status(status: int) -> None:
+	# frappe answers a method that isn't installed with 417 (handler.execute_cmd), not 404.
+	if status == 417:
+		raise RemoteError("not_installed")
+	if status == 403:
+		raise RemoteError("rejected")
+	if status != 200:
+		raise RemoteError("bad_response")
+
+
+def _message(raw: bytes) -> dict:
 	if len(raw) > MAX_RESPONSE_BYTES:
 		raise RemoteError("bad_response")
 	try:

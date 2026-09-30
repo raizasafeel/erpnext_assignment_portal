@@ -148,6 +148,7 @@ class TestApi(IntegrationTestCase):
 			self.assertRaises(frappe.PermissionError, api.link_site, "https://x.m.frappe.cloud")
 		cache = frappe.cache
 		self.assertFalse(cache.get(cache.make_key(f"grader-link-site:{self.outsider}")))
+		link.assert_not_called()
 
 	def link_student(self, user):
 		return frappe.get_doc(
