@@ -44,7 +44,7 @@ describe("SectionCard", () => {
 		expect(w.findComponent({ name: "Badge" }).vm.$attrs).toMatchObject({ theme: "amber", label: "In progress · 1/4" })
 		expect(render({ score: { passed: 4, total: 4, percent: 100 } }).findComponent({ name: "Badge" }).vm.$attrs.label).toBe("Done · 4/4")
 	})
-	it("marks each check passed, failed or not checked, with a check error label", () => {
+	it("marks each check passed, failed or not checked, with one label for any check error", () => {
 		const rows = render().findAll("li")
 		expect(rows.map((r) => r.attributes("data-state"))).toEqual(["pass", "fail", "fail", "pending"])
 		expect(rows.map((r) => r.text().replace(/\s+/g, " "))).toEqual([
@@ -53,7 +53,7 @@ describe("SectionCard", () => {
 			"Not yet: Stores: exists",
 			"Not checked: Transit: exists",
 		])
-		expect(rows[2].findComponent({ name: "Badge" }).vm.$attrs.label).toBe("not allowed")
+		expect(rows[2].findComponent({ name: "Badge" }).vm.$attrs.label).toBe("Couldn't check")
 		expect(rows[1].findComponent({ name: "Badge" }).exists()).toBe(false)
 	})
 	it("shows nothing as checked for a run that errored", () => {

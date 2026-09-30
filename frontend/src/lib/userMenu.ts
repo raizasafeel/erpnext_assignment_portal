@@ -3,7 +3,7 @@ import { h } from "vue"
 import type { App } from "../api"
 import { __ } from "../translate"
 
-export const PORTAL_APP = "erpnext_assignment_portal"
+const PORTAL_APP = "erpnext_assignment_portal"
 
 export interface ThemeControl {
 	scheme: ColorScheme
@@ -44,7 +44,7 @@ export function userMenu(apps: App[], actions: UserMenuActions, systemUser = isS
 	const others = apps
 		.filter((app) => app.name !== PORTAL_APP)
 		.map((app) => ({
-			label: __(app.title),
+			label: app.title,
 			slots: { prefix: appLogo(app) },
 			onClick: () => actions.open(app.route),
 		}))

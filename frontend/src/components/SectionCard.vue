@@ -113,11 +113,6 @@ const STATE_LABEL: Record<RowState, string> = {
 	fail: __("Not yet"),
 	pending: __("Not checked"),
 };
-const ERRORS: Record<string, string> = {
-	not_allowed: __("not allowed"),
-	invalid: __("invalid"),
-	timeout: __("timeout"),
-};
 const BADGE: Record<
 	SectionStatus,
 	{ theme: "green" | "amber" | "red"; label: (s: Score) => string }
@@ -149,7 +144,7 @@ const rows = computed(() =>
 	props.section.checks.map((check) => {
 		const result = checkResult(props.run, check.check_id);
 		const state: RowState = !result ? "pending" : result.passed ? "pass" : "fail";
-		const error = result?.check_error ? ERRORS[result.check_error] ?? __("error") : "";
+		const error = result?.check_error ? __("Couldn't check") : "";
 		return { ...check, state, error };
 	})
 );

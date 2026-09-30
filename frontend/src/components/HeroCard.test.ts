@@ -17,7 +17,7 @@ const stat = (w: ReturnType<typeof render>, key: string) =>
 
 describe("HeroCard", () => {
 	it("greets the student by first name", () => {
-		expect(render().find("h1").text()).toBe("Hi Grader — here's how your ERPNext site is doing")
+		expect(render().find("h1").text()).toBe("Hi Grader, here's how your ERPNext site is doing")
 	})
 	it("shows passed, still to fix and sections done", () => {
 		const w = render()

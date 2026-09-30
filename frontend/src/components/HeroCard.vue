@@ -5,7 +5,7 @@
 		<div class="flex flex-wrap items-start justify-between gap-4">
 			<div class="flex min-w-0 max-w-2xl flex-col gap-1.5">
 				<h1 class="text-xl font-semibold text-ink-gray-9">
-					{{ __("Hi {0} — here's how your ERPNext site is doing", [firstName]) }}
+					{{ __("Hi {0}, here's how your ERPNext site is doing", [firstName]) }}
 				</h1>
 				<p class="text-p-base text-ink-gray-7">
 					{{ __("We automatically check your practice site against each assignment.") }}
@@ -72,10 +72,10 @@ const firstName = computed(() => props.fullName.trim().split(/\s+/)[0] || __("th
 
 const encouragement = computed(() => {
 	const { percent, total, passed } = props.overview;
-	if (total && passed === total) return __("All done — every check is passing.");
-	if (percent >= 75) return __("Almost there — a few red items left.");
-	if (percent >= 25) return __("Good progress — keep working through the red items.");
-	return __("Let's get started — work through the sections below.");
+	if (total && passed === total) return __("All done. Every check is passing.");
+	if (percent >= 75) return __("Almost there. Only a few red items are left.");
+	if (percent >= 25) return __("Good progress. Keep working through the red items.");
+	return __("Let's get started. Work through the sections below.");
 });
 
 const stats = computed(() => [
