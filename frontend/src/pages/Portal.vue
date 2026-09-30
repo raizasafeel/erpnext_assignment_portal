@@ -72,7 +72,7 @@
 				v-for="(s, i) in sections"
 				:id="`section-${s.slug}`"
 				:key="s.slug"
-				:ref="(el) => track(s.slug, el as HTMLElement | null)"
+				:ref="(el) => spy.track(s.slug, el as HTMLElement | null)"
 				:data-slug="s.slug"
 				class="scroll-mt-4"
 			>
@@ -128,14 +128,11 @@ import { useRoute, useRouter } from "vue-router";
 import {
 	type App,
 	type Context,
-	type Run,
 	type Section,
 	getApps,
 	getContext,
-	getRun,
 	getSections,
 	logout,
-	startRun,
 } from "../api";
 import HeroCard from "../components/HeroCard.vue";
 import LinkSiteForm from "../components/LinkSiteForm.vue";
@@ -144,20 +141,13 @@ import RunAlert from "../components/RunAlert.vue";
 import SectionCard from "../components/SectionCard.vue";
 import SiteBar from "../components/SiteBar.vue";
 import { requestErrorMessage } from "../lib/errors";
+import { useRunWatcher } from "../lib/runWatcher";
 import { overview, sectionScores, sectionStatus } from "../lib/scores";
+import { useSectionSpy } from "../lib/sectionSpy";
 import { useTheme } from "../lib/theme";
 import { userMenu } from "../lib/userMenu";
-import { onRunUpdate } from "../socket";
-import { __ } from "../translate";
 
-const POLL_MS = 5000;
-const POLL_LIMIT_MS = 120000;
 const MOBILE_QUERY = "(max-width: 767px)";
-const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
-const SPY_MARGIN = "0px 0px -60% 0px";
-const SPY_PAUSE_MS = 1000;
-const FINISHED = ["Done", "Error"];
-const IN_PROGRESS = ["Queued", "Running"];
 
 const route = useRoute();
 const router = useRouter();
@@ -166,10 +156,6 @@ const notEnrolled = ref(false);
 const loadError = ref("");
 const ctx = ref<Context | null>(null);
 const sections = ref<Section[]>([]);
-const run = ref<Run | null>(null);
-const lastDone = ref<Run | null>(null);
-const grading = ref(false);
-const stillRunning = ref(false);
 const relinking = ref(false);
 const picking = ref(false);
 const mobileQuery = window.matchMedia(MOBILE_QUERY);
@@ -177,12 +163,9 @@ const isMobile = ref(mobileQuery.matches);
 const apps = ref<App[]>([]);
 const activeSlug = ref("");
 const openSlugs = ref(new Set<string>());
-const cards = new Map<string, HTMLElement>();
-const inView = new Set<string>();
-let spy: IntersectionObserver | null = null;
-let spyPausedUntil = 0;
-let pollTimer: ReturnType<typeof setTimeout> | undefined;
 const theme = useTheme();
+const { run, lastDone, grading, stillRunning, restore, recheck } = useRunWatcher();
+const spy = useSectionSpy(sections, activeSlug);
 
 const siteBlocked = computed(() => Boolean(ctx.value?.site?.expired || ctx.value?.site?.revoked));
 const graded = computed(() => (run.value?.status === "Done" ? run.value : lastDone.value));
@@ -212,46 +195,14 @@ function setOpen(slug: string, open: boolean) {
 	else openSlugs.value.delete(slug);
 }
 
-function scrollTo(slug: string) {
-	const smooth = !window.matchMedia(REDUCED_MOTION_QUERY).matches;
-	cards.get(slug)?.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
-}
-
 async function goTo(slug: string) {
 	picking.value = false;
 	setOpen(slug, true);
 	activeSlug.value = slug;
-	spyPausedUntil = Date.now() + SPY_PAUSE_MS;
+	spy.pause();
 	router.replace({ params: { section: slug } });
 	await nextTick();
-	scrollTo(slug);
-}
-
-function track(slug: string, el: HTMLElement | null) {
-	const previous = cards.get(slug);
-	if (previous === el) return;
-	if (previous) spy?.unobserve(previous);
-	if (el) {
-		cards.set(slug, el);
-		spy?.observe(el);
-	} else cards.delete(slug);
-}
-
-function onSpy(entries: IntersectionObserverEntry[]) {
-	for (const entry of entries) {
-		const slug = (entry.target as HTMLElement).dataset.slug ?? "";
-		if (entry.isIntersecting) inView.add(slug);
-		else inView.delete(slug);
-	}
-	if (Date.now() < spyPausedUntil) return;
-	const first = sections.value.find((s) => inView.has(s.slug));
-	if (first) activeSlug.value = first.slug;
-}
-
-function startSpy() {
-	if (!("IntersectionObserver" in window)) return;
-	spy = new IntersectionObserver(onSpy, { rootMargin: SPY_MARGIN });
-	cards.forEach((el) => spy?.observe(el));
+	spy.scrollTo(slug);
 }
 
 function initialSection(): string {
@@ -281,22 +232,23 @@ async function signOut() {
 async function load() {
 	loadError.value = "";
 	try {
-		ctx.value = await getContext();
-		sections.value = await getSections();
+		[ctx.value, sections.value] = await Promise.all([getContext(), getSections()]);
 	} catch (e) {
 		if ((e as { exc_type?: string }).exc_type === "PermissionError") notEnrolled.value = true;
 		else loadError.value = requestErrorMessage(e);
 		loading.value = false;
 		return;
 	}
-	run.value = ctx.value.last_run;
-	lastDone.value = ctx.value.last_done_run;
+	restore(ctx.value.last_run, ctx.value.last_done_run);
 	loading.value = false;
+	openFirstSection();
+}
+
+function openFirstSection() {
 	const first = initialSection();
 	activeSlug.value = first;
 	if (first) setOpen(first, true);
-	if (route.params.section === first) nextTick(() => scrollTo(first));
-	if (run.value && IN_PROGRESS.includes(run.value.status)) watchRun(run.value.name);
+	if (route.params.section === first) nextTick(() => spy.scrollTo(first));
 }
 
 function onRelinked() {
@@ -304,70 +256,14 @@ function onRelinked() {
 	load();
 }
 
-async function recheck() {
-	grading.value = true;
-	try {
-		const { run: name } = await startRun();
-		const latest = await getRun(name);
-		if (FINISHED.includes(latest.status)) return settle(latest);
-		run.value = latest;
-		watchRun(name);
-	} catch (e) {
-		grading.value = false;
-		toast.error(requestErrorMessage(e));
-	}
-}
-
-function watchRun(name: string) {
-	grading.value = true;
-	stillRunning.value = false;
-	const started = Date.now();
-	clearTimeout(pollTimer);
-	const tick = async () => {
-		try {
-			const latest = await getRun(name);
-			if (FINISHED.includes(latest.status)) return settle(latest);
-		} catch {
-			// a failed poll is retried on the next tick
-		}
-		if (Date.now() - started > POLL_LIMIT_MS) {
-			grading.value = false;
-			stillRunning.value = true;
-			return;
-		}
-		pollTimer = setTimeout(tick, POLL_MS);
-	};
-	pollTimer = setTimeout(tick, POLL_MS);
-}
-
-function isSettled(name: string) {
-	return run.value?.name === name && FINISHED.includes(run.value.status);
-}
-
-function settle(latest: Run) {
-	clearTimeout(pollTimer);
-	if (isSettled(latest.name)) return;
-	run.value = latest;
-	if (latest.status === "Done") lastDone.value = latest;
-	grading.value = false;
-	stillRunning.value = false;
-	if (latest.status === "Done") toast.success(__("Grading finished"));
-}
-
-let stop = () => {};
 onMounted(() => {
 	mobileQuery.addEventListener("change", onMobileChange);
-	startSpy();
+	spy.start();
 	load();
 	loadApps();
-	stop = onRunUpdate(async (e) => {
-		if (e.run === run.value?.name && !isSettled(e.run)) settle(await getRun(e.run));
-	});
 });
 onUnmounted(() => {
 	mobileQuery.removeEventListener("change", onMobileChange);
-	stop();
-	spy?.disconnect();
-	clearTimeout(pollTimer);
+	spy.stop();
 });
 </script>
