@@ -9,6 +9,8 @@ const api = vi.hoisted(() => ({
 	getRun: vi.fn(),
 	startRun: vi.fn(),
 	linkSite: vi.fn(),
+	getApps: vi.fn(),
+	logout: vi.fn(),
 }))
 const realtime = vi.hoisted(() => ({ handler: null as null | ((e: { run: string; status: string }) => void) }))
 
@@ -23,14 +25,20 @@ vi.mock("vue-router", () => ({ useRoute: () => ({ params: {} }), useRouter: () =
 vi.mock("frappe-ui", async () => {
 	const { stub } = await import("../test/stub")
 	const names = ["Alert", "Badge", "BottomSheet", "Button", "DesktopShell", "Dialog", "Dropdown", "ItemListRow",
-		"LoadingIndicator", "MobileShell", "PageHeader", "Sidebar", "SidebarHeader", "SidebarItem"]
+		"LoadingIndicator", "MobileShell", "PageHeader"]
 	return { ...Object.fromEntries(names.map((n) => [n, stub(n)])), toast: { success: vi.fn(), error: vi.fn() } }
 })
 vi.mock("../components/LinkSiteForm.vue", async () => ({ default: (await import("../test/stub")).stub("LinkSiteForm") }))
 vi.mock("../components/RunAlert.vue", async () => ({ default: (await import("../test/stub")).stub("RunAlert") }))
-vi.mock("../components/SectionPanel.vue", async () => ({ default: (await import("../test/stub")).stub("SectionPanel") }))
+vi.mock("../components/HeroCard.vue", async () => ({ default: (await import("../test/stub")).stub("HeroCard") }))
+vi.mock("../components/PortalSidebar.vue", async () => ({ default: (await import("../test/stub")).stub("PortalSidebar") }))
+vi.mock("../components/SectionCard.vue", async () => ({ default: (await import("../test/stub")).stub("SectionCard") }))
+vi.mock("../components/SiteBar.vue", async () => ({ default: (await import("../test/stub")).stub("SiteBar") }))
 
-const SECTIONS = [{ slug: "wh", title: "Warehouses", details: "", checks: [{ check_id: "1", title: "Mumbai" }] }]
+const SECTIONS = [
+	{ slug: "wh", title: "Warehouses", details: "", checks: [{ check_id: "1", title: "Mumbai" }] },
+	{ slug: "coa", title: "Chart of Accounts", details: "", checks: [{ check_id: "2", title: "Stock" }] },
+]
 const run = (status: string) => ({
 	name: "r1", status, error_code: null, started_on: null, finished_on: null, passed: 0, total: 1, results: [],
 })
@@ -40,8 +48,24 @@ const context = (over = {}) => ({
 	last_run: null, ...over,
 })
 
-function setScreen(mobile: boolean) {
-	window.matchMedia = vi.fn().mockReturnValue({ matches: mobile, addEventListener: vi.fn(), removeEventListener: vi.fn() })
+function setScreen(mobile: boolean, reducedMotion = false) {
+	window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+		matches: query.includes("reduced-motion") ? reducedMotion : mobile,
+		addEventListener: vi.fn(),
+		removeEventListener: vi.fn(),
+	}))
+}
+
+const spy = vi.hoisted(() => ({ callback: null as null | IntersectionObserverCallback, observed: [] as Element[] }))
+class FakeObserver {
+	constructor(callback: IntersectionObserverCallback) {
+		spy.callback = callback
+	}
+	observe(el: Element) {
+		spy.observed.push(el)
+	}
+	unobserve() {}
+	disconnect() {}
 }
 
 function render() {
@@ -49,8 +73,11 @@ function render() {
 }
 
 const has = (w: ReturnType<typeof render>, name: string) => w.find(`[data-stub="${name}"]`).exists()
-const recheckButton = (w: ReturnType<typeof render>) =>
-	w.findAllComponents({ name: "Button" }).find((b) => b.vm.$attrs.label === "Re-check")!
+const hero = (w: ReturnType<typeof render>) => w.findComponent({ name: "HeroCard" }).vm.$attrs
+const cards = (w: ReturnType<typeof render>) => w.findAllComponents({ name: "SectionCard" })
+const openCards = (w: ReturnType<typeof render>) =>
+	cards(w).filter((c) => c.vm.$attrs.open).map((c) => (c.vm.$attrs.section as { slug: string }).slug)
+const scrolled = () => vi.mocked(Element.prototype.scrollIntoView).mock
 const stillRunning = (w: ReturnType<typeof render>) => w.findComponent({ name: "RunAlert" }).vm.$attrs["still-running"]
 
 describe("Portal", () => {
@@ -58,9 +85,15 @@ describe("Portal", () => {
 		vi.clearAllMocks()
 		setScreen(false)
 		api.getSections.mockResolvedValue(SECTIONS)
+		api.getApps.mockResolvedValue([])
+		Element.prototype.scrollIntoView = vi.fn()
+		spy.callback = null
+		spy.observed = []
+		vi.stubGlobal("IntersectionObserver", FakeObserver)
 	})
 	afterEach(() => {
 		vi.useRealTimers()
+		vi.unstubAllGlobals()
 	})
 
 	it("shows the loader until the context arrives", () => {
@@ -88,7 +121,9 @@ describe("Portal", () => {
 		const w = render()
 		await flushPromises()
 		expect(has(w, "DesktopShell")).toBe(true)
-		expect(has(w, "SectionPanel")).toBe(true)
+		expect(has(w, "PortalSidebar")).toBe(true)
+		expect(has(w, "HeroCard")).toBe(true)
+		expect(cards(w)).toHaveLength(2)
 		expect(has(w, "MobileShell")).toBe(false)
 	})
 
@@ -99,6 +134,8 @@ describe("Portal", () => {
 		await flushPromises()
 		expect(has(w, "MobileShell")).toBe(true)
 		expect(has(w, "BottomSheet")).toBe(true)
+		expect(has(w, "PortalSidebar")).toBe(false)
+		expect(cards(w)).toHaveLength(2)
 		expect(has(w, "DesktopShell")).toBe(false)
 	})
 
@@ -165,13 +202,86 @@ describe("Portal", () => {
 		await flushPromises()
 		const alert = w.findComponent({ name: "RunAlert" }).vm.$attrs
 		expect([alert.revoked, alert.expired]).toEqual([state.revoked, state.expired])
-		expect(recheckButton(w).vm.$attrs.disabled).toBe(true)
+		expect(hero(w).blocked).toBe(true)
 	})
 
 	it("allows Re-check for an active site", async () => {
 		api.getContext.mockResolvedValue(context())
 		const w = render()
 		await flushPromises()
-		expect(recheckButton(w).vm.$attrs.disabled).toBe(false)
+		expect(hero(w).blocked).toBe(false)
+	})
+
+	it("re-checks from the hero card", async () => {
+		api.getContext.mockResolvedValue(context())
+		api.startRun.mockResolvedValue({ run: "r1" })
+		api.getRun.mockResolvedValue(run("Done"))
+		const w = render()
+		await flushPromises()
+		w.findComponent({ name: "HeroCard" }).vm.$emit("recheck")
+		await flushPromises()
+		expect(api.startRun).toHaveBeenCalledOnce()
+		expect(toast.success).toHaveBeenCalledOnce()
+	})
+
+	it("opens only the first unfinished section at first", async () => {
+		api.getContext.mockResolvedValue(context())
+		const w = render()
+		await flushPromises()
+		expect(openCards(w)).toEqual(["wh"])
+		expect(w.findComponent({ name: "PortalSidebar" }).vm.$attrs.active).toBe("wh")
+	})
+
+	it("scrolls to a picked section smoothly and expands it", async () => {
+		api.getContext.mockResolvedValue(context())
+		const w = render()
+		await flushPromises()
+		w.findComponent({ name: "PortalSidebar" }).vm.$emit("pick", "coa")
+		await flushPromises()
+		expect(openCards(w)).toEqual(["wh", "coa"])
+		expect(scrolled().contexts.map((el) => (el as Element).id)).toEqual(["section-coa"])
+		expect(scrolled().calls[0][0]).toMatchObject({ behavior: "smooth", block: "start" })
+		expect(w.findComponent({ name: "PortalSidebar" }).vm.$attrs.active).toBe("coa")
+	})
+
+	it("jumps without animation when the user prefers reduced motion", async () => {
+		setScreen(false, true)
+		api.getContext.mockResolvedValue(context())
+		const w = render()
+		await flushPromises()
+		w.findComponent({ name: "PortalSidebar" }).vm.$emit("pick", "coa")
+		await flushPromises()
+		expect(scrolled().calls[0][0]).toMatchObject({ behavior: "auto" })
+	})
+
+	it("opens and closes each section card on its own", async () => {
+		api.getContext.mockResolvedValue(context())
+		const w = render()
+		await flushPromises()
+		cards(w)[1].vm.$emit("update:open", true)
+		await flushPromises()
+		expect(openCards(w)).toEqual(["wh", "coa"])
+		cards(w)[0].vm.$emit("update:open", false)
+		await flushPromises()
+		expect(openCards(w)).toEqual(["coa"])
+	})
+
+	it("follows the scroll position in the sidebar", async () => {
+		api.getContext.mockResolvedValue(context())
+		const w = render()
+		await flushPromises()
+		const coa = spy.observed.find((el) => el.id === "section-coa")!
+		spy.callback?.([{ target: coa, isIntersecting: true } as unknown as IntersectionObserverEntry], {} as IntersectionObserver)
+		await flushPromises()
+		expect(w.findComponent({ name: "PortalSidebar" }).vm.$attrs.active).toBe("coa")
+	})
+
+	it("gives the sidebar menu Apps and Log out", async () => {
+		api.getContext.mockResolvedValue(context())
+		api.getApps.mockResolvedValue([{ name: "lms", title: "Learning", logo: "/l.svg", route: "/lms" }])
+		const w = render()
+		await flushPromises()
+		const menu = w.findComponent({ name: "PortalSidebar" }).vm.$attrs.menu as { label: string }[]
+		expect(menu.map((o) => o.label)).toEqual(["Apps", "Link a different site", "Log out"])
 	})
 })
