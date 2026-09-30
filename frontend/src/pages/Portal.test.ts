@@ -35,6 +35,7 @@ vi.mock("frappe-ui", async () => {
 	}
 })
 vi.mock("../components/NotEnrolled.vue", async () => ({ default: (await import("../test/stub")).stub("NotEnrolled") }))
+vi.mock("../components/LinkSitePage.vue", async () => ({ default: (await import("../test/stub")).stub("LinkSitePage") }))
 vi.mock("../components/LinkSiteForm.vue", async () => ({ default: (await import("../test/stub")).stub("LinkSiteForm") }))
 vi.mock("../components/RunAlert.vue", async () => ({ default: (await import("../test/stub")).stub("RunAlert") }))
 vi.mock("../components/HeroCard.vue", async () => ({ default: (await import("../test/stub")).stub("HeroCard") }))
@@ -113,14 +114,14 @@ describe("Portal", () => {
 		const w = render()
 		await flushPromises()
 		expect(has(w, "NotEnrolled")).toBe(true)
-		expect(has(w, "LinkSiteForm")).toBe(false)
+		expect(has(w, "LinkSitePage")).toBe(false)
 	})
 
 	it("shows the link form when no site is linked", async () => {
 		api.getContext.mockResolvedValue(context({ site: null }))
 		const w = render()
 		await flushPromises()
-		expect(has(w, "LinkSiteForm")).toBe(true)
+		expect(has(w, "LinkSitePage")).toBe(true)
 	})
 
 	it("shows the desktop dashboard for a linked site", async () => {

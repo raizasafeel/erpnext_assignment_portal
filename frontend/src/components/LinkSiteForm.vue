@@ -1,24 +1,25 @@
 <template>
-	<div class="mx-auto flex w-full max-w-md flex-col gap-4 p-6">
-		<h1 class="text-xl font-semibold text-ink-gray-9">
-			{{ __("Link your trial site") }}
-		</h1>
-		<p class="text-p-base text-ink-gray-7">
-			{{
-				__(
-					"Install the ERPNext Assignment Checks app on your Frappe Cloud trial, then enter its address. You must be a System Manager there with this email."
-				)
-			}}
-		</p>
+	<form class="flex flex-col gap-3" @submit.prevent="submit">
 		<FormControl
 			v-model="site"
 			type="url"
 			:label="__('Site address')"
 			placeholder="https://yourname.m.frappe.cloud"
+			:description="
+				__('You must be a System Manager on this site with the email you use here.')
+			"
+			autocomplete="url"
 		/>
 		<ErrorMessage :message="error" />
-		<Button variant="solid" :loading="loading" :label="__('Link site')" @click="submit" />
-	</div>
+		<Button
+			type="submit"
+			variant="solid"
+			class="w-full"
+			:loading="loading"
+			:disabled="!site.trim()"
+			:label="__('Connect site')"
+		/>
+	</form>
 </template>
 
 <script setup lang="ts">
@@ -37,7 +38,7 @@ async function submit() {
 	loading.value = true;
 	error.value = "";
 	try {
-		await linkSite(site.value);
+		await linkSite(site.value.trim());
 		emit("linked");
 	} catch (e) {
 		error.value = requestErrorMessage(e);

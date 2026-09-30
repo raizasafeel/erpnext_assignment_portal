@@ -6,7 +6,7 @@
 	<div v-else-if="loadError" class="p-6">
 		<Alert theme="red" :title="__('Could not load the portal')" :description="loadError" />
 	</div>
-	<LinkSiteForm v-else-if="!ctx?.site" @linked="load" />
+	<LinkSitePage v-else-if="!ctx?.site" @linked="load" @logout="signOut" />
 	<component :is="isMobile ? MobileShell : DesktopShell" v-else>
 		<template #sidebar>
 			<PortalSidebar
@@ -130,6 +130,7 @@ import {
 } from "../api";
 import HeroCard from "../components/HeroCard.vue";
 import LinkSiteForm from "../components/LinkSiteForm.vue";
+import LinkSitePage from "../components/LinkSitePage.vue";
 import NotEnrolled from "../components/NotEnrolled.vue";
 import PortalSidebar from "../components/PortalSidebar.vue";
 import RunAlert from "../components/RunAlert.vue";
