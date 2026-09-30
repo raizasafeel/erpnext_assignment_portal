@@ -34,6 +34,7 @@ vi.mock("frappe-ui", async () => {
 		useColorScheme: () => ({ colorScheme: scheme, setColorScheme: (v: string) => (scheme.value = v) }),
 	}
 })
+vi.mock("../components/NotEnrolled.vue", async () => ({ default: (await import("../test/stub")).stub("NotEnrolled") }))
 vi.mock("../components/LinkSiteForm.vue", async () => ({ default: (await import("../test/stub")).stub("LinkSiteForm") }))
 vi.mock("../components/RunAlert.vue", async () => ({ default: (await import("../test/stub")).stub("RunAlert") }))
 vi.mock("../components/HeroCard.vue", async () => ({ default: (await import("../test/stub")).stub("HeroCard") }))
@@ -107,11 +108,11 @@ describe("Portal", () => {
 		expect(has(render(), "LoadingIndicator")).toBe(true)
 	})
 
-	it("shows the not-enrolled alert when get_context is forbidden", async () => {
+	it("shows the not-enrolled page when get_context is forbidden", async () => {
 		api.getContext.mockRejectedValue(Object.assign(new Error("no"), { exc_type: "PermissionError" }))
 		const w = render()
 		await flushPromises()
-		expect(w.find('[data-title="You are not enrolled"]').exists()).toBe(true)
+		expect(has(w, "NotEnrolled")).toBe(true)
 		expect(has(w, "LinkSiteForm")).toBe(false)
 	})
 

@@ -24,3 +24,14 @@ class TestPortalPage(IntegrationTestCase):
 		self.assertEqual(context.boot.site_name, frappe.local.site)
 		self.assertTrue(context.favicon)
 		self.assertTrue(context.title)
+
+	def test_boot_names_the_course_for_the_not_enrolled_page(self):
+		self.addCleanup(frappe.db.rollback)
+		course = frappe.db.get_value("LMS Course", {}, ["name", "title"], as_dict=True)
+		if not course:
+			self.skipTest("no LMS Course on this site")
+		frappe.db.set_single_value("Grader Settings", "course", course.name)
+		frappe.set_user("Administrator")
+		boot = assignment_portal.get_context(frappe._dict()).boot
+		self.assertEqual(boot.course, {"name": course.name, "title": course.title})
+		self.assertEqual(boot.user, "Administrator")

@@ -2,13 +2,12 @@
 	<div v-if="loading" class="flex h-screen items-center justify-center">
 		<LoadingIndicator class="size-6" />
 	</div>
-	<div v-else-if="notEnrolled" class="p-6">
-		<Alert
-			theme="amber"
-			:title="__('You are not enrolled')"
-			:description="__('Enroll in the course to use the grader.')"
-		/>
-	</div>
+	<NotEnrolled
+		v-else-if="notEnrolled"
+		:course="boot.course ?? null"
+		:user="boot.user ?? ''"
+		@logout="signOut"
+	/>
 	<div v-else-if="loadError" class="p-6">
 		<Alert theme="red" :title="__('Could not load the portal')" :description="loadError" />
 	</div>
@@ -136,10 +135,12 @@ import {
 } from "../api";
 import HeroCard from "../components/HeroCard.vue";
 import LinkSiteForm from "../components/LinkSiteForm.vue";
+import NotEnrolled from "../components/NotEnrolled.vue";
 import PortalSidebar from "../components/PortalSidebar.vue";
 import RunAlert from "../components/RunAlert.vue";
 import SectionCard from "../components/SectionCard.vue";
 import SiteBar from "../components/SiteBar.vue";
+import { boot } from "../boot";
 import { requestErrorMessage } from "../lib/errors";
 import { useRunWatcher } from "../lib/runWatcher";
 import { overview, sectionScores, sectionStatus } from "../lib/scores";

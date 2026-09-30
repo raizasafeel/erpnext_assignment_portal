@@ -2,6 +2,8 @@ import frappe
 from frappe.translate import get_user_lang
 from frappe.utils.jinja_globals import is_rtl
 
+from erpnext_assignment_portal.constants import SETTINGS
+
 no_cache = 1
 ROUTE = "/assignments-portal/erpnext"
 
@@ -33,5 +35,14 @@ def get_boot(csrf_token: str) -> frappe._dict:
 			"socketio_port": frappe.conf.socketio_port,
 			"lang": get_user_lang(),
 			"text_direction": "rtl" if is_rtl() else "ltr",
+			"user": frappe.session.user,
+			"course": get_course(),
 		}
 	)
+
+
+def get_course() -> dict | None:
+	course = frappe.db.get_single_value(SETTINGS, "course")
+	if not course:
+		return None
+	return {"name": course, "title": frappe.db.get_value("LMS Course", course, "title") or course}
