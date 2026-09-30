@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { checkResult, sectionScores } from "./scores"
+import { checkResult, overview, sectionScores, sectionStatus } from "./scores"
 
 const sections = [
 	{ slug: "a", title: "A", details: "", checks: [{ check_id: "1", title: "x" }, { check_id: "2", title: "y" }] },
@@ -29,5 +29,22 @@ describe("sectionScores", () => {
 	})
 	it("finds a check result", () => {
 		expect(checkResult(run, "3")?.found_count).toBe(4)
+	})
+})
+
+describe("overview", () => {
+	it("adds up checks and finished sections", () => {
+		expect(overview(sectionScores(sections, run))).toEqual({
+			passed: 2,
+			total: 3,
+			percent: 67,
+			sectionsDone: 1,
+			sectionsTotal: 2,
+		})
+	})
+	it("labels a section by how far along it is", () => {
+		expect(sectionStatus({ passed: 0, total: 4, percent: 0 })).toBe("todo")
+		expect(sectionStatus({ passed: 3, total: 12, percent: 25 })).toBe("partial")
+		expect(sectionStatus({ passed: 11, total: 11, percent: 100 })).toBe("done")
 	})
 })

@@ -40,3 +40,12 @@ export const getSections = () => call<Section[]>(m("get_sections"))
 export const getRun = (run: string) => call<Run>(m("get_run"), { run })
 export const linkSite = (site: string) => call<{ site: string }>(m("link_site"), { site })
 export const startRun = () => call<{ run: string }>(m("start_run"))
+
+export interface App {
+	name: string
+	title: string
+	logo: string
+	route: string
+}
+export const getApps = () => call<App[]>("frappe.apps.get_apps")
+export const logout = () => call("logout")
