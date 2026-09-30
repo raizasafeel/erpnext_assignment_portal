@@ -45,7 +45,7 @@
 				</p>
 			</div>
 			<div
-				class="flex min-w-0 flex-col gap-3 border-outline-gray-1 bg-surface-gray-1 p-5 max-md:border-t md:border-s"
+				class="flex min-w-0 flex-col gap-3 border-outline-gray-1 p-5 max-md:border-t md:border-s"
 			>
 				<div class="flex items-center justify-between gap-2">
 					<h3
@@ -101,7 +101,7 @@ type RowState = "pass" | "fail" | "pending";
 const ROW: Record<RowState, string> = {
 	pass: "bg-surface-green-1",
 	fail: "bg-surface-red-1",
-	pending: "bg-surface-base",
+	pending: "bg-surface-gray-1",
 };
 const ICON: Record<RowState, string> = {
 	pass: "lucide-circle-check text-ink-green-6",
