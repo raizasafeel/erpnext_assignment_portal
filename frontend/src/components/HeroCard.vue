@@ -4,9 +4,6 @@
 	>
 		<div class="flex flex-wrap items-start justify-between gap-4">
 			<div class="flex min-w-0 max-w-2xl flex-col gap-1.5">
-				<span class="text-xs font-semibold uppercase tracking-wide text-ink-green-7">
-					{{ __("Your course site checker") }}
-				</span>
 				<h1 class="text-xl font-semibold text-ink-gray-9">
 					{{ __("Hi {0} — here's how your ERPNext site is doing", [firstName]) }}
 				</h1>
