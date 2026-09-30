@@ -26,7 +26,13 @@ vi.mock("frappe-ui", async () => {
 	const { stub } = await import("../test/stub")
 	const names = ["Alert", "Badge", "BottomSheet", "Button", "DesktopShell", "Dialog", "Dropdown", "ItemListRow",
 		"LoadingIndicator", "MobileShell", "PageHeader"]
-	return { ...Object.fromEntries(names.map((n) => [n, stub(n)])), toast: { success: vi.fn(), error: vi.fn() } }
+	const { ref } = await import("vue")
+	const scheme = ref("system")
+	return {
+		...Object.fromEntries(names.map((n) => [n, stub(n)])),
+		toast: { success: vi.fn(), error: vi.fn() },
+		useColorScheme: () => ({ colorScheme: scheme, setColorScheme: (v: string) => (scheme.value = v) }),
+	}
 })
 vi.mock("../components/LinkSiteForm.vue", async () => ({ default: (await import("../test/stub")).stub("LinkSiteForm") }))
 vi.mock("../components/RunAlert.vue", async () => ({ default: (await import("../test/stub")).stub("RunAlert") }))
@@ -313,6 +319,6 @@ describe("Portal", () => {
 		const w = render()
 		await flushPromises()
 		const menu = w.findComponent({ name: "PortalSidebar" }).vm.$attrs.menu as { label: string }[]
-		expect(menu.map((o) => o.label)).toEqual(["Apps", "Link a different site", "Log out"])
+		expect(menu.map((o) => o.label)).toEqual(["Apps", "Link a different site", "Theme", "Log out"])
 	})
 })

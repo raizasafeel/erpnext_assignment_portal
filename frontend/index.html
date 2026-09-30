@@ -2,6 +2,15 @@
 <html class="h-full" lang="{{ boot.lang or 'en' }}" dir="{{ boot.text_direction or 'ltr' }}">
 	<head>
 		<meta charset="UTF-8" />
+		<script>
+			try {
+				var scheme = localStorage.getItem("theme");
+				if (scheme !== "light" && scheme !== "dark") {
+					scheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+				}
+				document.documentElement.setAttribute("data-theme", scheme);
+			} catch (e) {}
+		</script>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="icon" href="{{ favicon }}" />
 		<title>{{ title | e }}</title>

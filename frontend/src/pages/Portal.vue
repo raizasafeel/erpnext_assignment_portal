@@ -145,6 +145,7 @@ import SectionCard from "../components/SectionCard.vue";
 import SiteBar from "../components/SiteBar.vue";
 import { requestErrorMessage } from "../lib/errors";
 import { overview, sectionScores, sectionStatus } from "../lib/scores";
+import { useTheme } from "../lib/theme";
 import { userMenu } from "../lib/userMenu";
 import { onRunUpdate } from "../socket";
 import { __ } from "../translate";
@@ -181,6 +182,7 @@ const inView = new Set<string>();
 let spy: IntersectionObserver | null = null;
 let spyPausedUntil = 0;
 let pollTimer: ReturnType<typeof setTimeout> | undefined;
+const theme = useTheme();
 
 const siteBlocked = computed(() => Boolean(ctx.value?.site?.expired || ctx.value?.site?.revoked));
 const graded = computed(() => (run.value?.status === "Done" ? run.value : lastDone.value));
@@ -190,6 +192,7 @@ const activeSection = computed(() => sections.value.find((s) => s.slug === activ
 const menu = computed(() =>
 	userMenu(apps.value, {
 		relink: () => (relinking.value = true),
+		theme: { scheme: theme.colorScheme.value, set: theme.setColorScheme },
 		logout: signOut,
 		open: (path) => window.location.assign(path),
 	})

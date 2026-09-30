@@ -6,7 +6,13 @@ const APPS = [
 	{ name: "erpnext_assignment_portal", title: "Assignment Portal", logo: "/p.svg", route: "/assignments-portal/erpnext" },
 ]
 const actions = () => ({ relink: vi.fn(), logout: vi.fn(), open: vi.fn() })
-type Option = { label: string; submenu?: Option[]; condition?: () => boolean; onClick?: () => void }
+type Option = {
+	label: string
+	submenu?: Option[]
+	selected?: boolean
+	condition?: () => boolean
+	onClick?: () => void
+}
 const find = (menu: unknown, label: string) => (menu as Option[]).find((o) => o.label === label)!
 
 describe("userMenu", () => {
@@ -33,5 +39,19 @@ describe("userMenu", () => {
 	it("reads the system_user cookie", () => {
 		expect(isSystemUser("sid=x; system_user=yes")).toBe(true)
 		expect(isSystemUser("sid=x; system_user=no")).toBe(false)
+	})
+	it("offers light, dark and system themes and marks the current one", () => {
+		const set = vi.fn()
+		const theme = find(userMenu([], { ...actions(), theme: { scheme: "dark", set } }, false), "Theme")
+		expect(theme.submenu?.map((o) => [o.label, o.selected])).toEqual([
+			["Light", false],
+			["Dark", true],
+			["System", false],
+		])
+		theme.submenu?.[2].onClick?.()
+		expect(set).toHaveBeenCalledWith("system")
+	})
+	it("hides Theme when no control is given", () => {
+		expect(find(userMenu([], actions(), false), "Theme").condition?.()).toBe(false)
 	})
 })
