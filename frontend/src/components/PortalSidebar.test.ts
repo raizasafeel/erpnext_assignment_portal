@@ -4,7 +4,7 @@ import PortalSidebar from "./PortalSidebar.vue"
 
 vi.mock("frappe-ui", async () => {
 	const { stub } = await import("../test/stub")
-	const names = ["ScrollArea", "Sidebar", "SidebarHeader", "SidebarItem", "SidebarLabel", "TextInput"]
+	const names = ["Dropdown", "ScrollArea", "Sidebar", "SidebarItem", "SidebarLabel", "TextInput"]
 	return Object.fromEntries(names.map((n) => [n, stub(n)]))
 })
 
@@ -30,12 +30,12 @@ const items = (w: ReturnType<typeof render>) => w.findAllComponents({ name: "Sid
 describe("PortalSidebar", () => {
 	it("lists every section with its score, status dot and active state", () => {
 		const w = render()
-		expect(items(w).map((i) => [i.vm.$attrs.label, i.vm.$attrs.suffix, i.vm.$attrs["data-status"]])).toEqual([
+		expect(items(w).map((i) => [i.vm.$attrs.label, i.find(".me-2").text(), i.vm.$attrs["data-status"]])).toEqual([
 			["Company Setup", "0/4", "todo"],
 			["Warehouses", "7/11", "partial"],
 			["Chart of Accounts", "11/11", "done"],
 		])
-		expect(items(w).map((i) => i.find("span").classes())).toEqual([
+		expect(items(w).map((i) => i.find(".rounded-full").classes())).toEqual([
 			expect.arrayContaining(["bg-surface-red-4"]),
 			expect.arrayContaining(["bg-surface-amber-6"]),
 			expect.arrayContaining(["bg-surface-green-7"]),
@@ -57,8 +57,15 @@ describe("PortalSidebar", () => {
 		expect(w.emitted("pick")).toEqual([["coa"]])
 	})
 	it("hangs the user menu off the header", () => {
-		const header = render().findComponent({ name: "SidebarHeader" }).vm.$attrs
-		expect(header).toMatchObject({ title: "ERPNext Assignment Portal", subtitle: "Grader Student" })
-		expect((header["menu-items"] as { label: string }[]).map((o) => o.label)).toEqual(["Apps", "Log out"])
+		const menu = render().findComponent({ name: "Dropdown" })
+		expect(menu.text()).toContain("ERPNext Assignment Portal")
+		expect(menu.text()).toContain("Grader Student")
+		expect((menu.vm.$attrs.options as { label: string }[]).map((o) => o.label)).toEqual(["Apps", "Log out"])
+	})
+	it("sets sidebar text in the paragraph scale", () => {
+		const w = render()
+		expect(w.find(".text-p-base-medium").text()).toBe("ERPNext Assignment Portal")
+		expect(w.findAll(".text-p-sm").map((e) => e.text())).toContain("7/11")
+		expect(w.findComponent({ name: "TextInput" }).vm.$attrs.class).toBe("[&_input]:text-p-base")
 	})
 })

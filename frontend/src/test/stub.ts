@@ -9,7 +9,7 @@ export function stub(name: string) {
 				h(
 					"div",
 					{ "data-stub": name, "data-title": attrs.title },
-					Object.values(slots).map((slot) => slot?.()),
+					Object.values(slots).map((slot) => slot?.({})),
 				)
 		},
 	})
