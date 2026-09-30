@@ -1,11 +1,13 @@
 <template>
 	<Sidebar :collapsible="false" width="17rem" :aria-label="__('Sections')">
-		<SidebarHeader
-			:title="__('ERPNext Assignment Portal')"
-			:subtitle="fullName"
-			:logo="LOGO"
-			:menu-items="menu"
-		/>
+		<div class="px-1 pt-2">
+			<SidebarHeader
+				:title="__('ERPNext Assignment Portal')"
+				:subtitle="fullName"
+				:logo="LOGO"
+				:menu-items="menu"
+			/>
+		</div>
 		<div class="px-2 pb-2 pt-1">
 			<TextInput v-model="filter" type="search" :placeholder="__('Filter sections')">
 				<template #prefix>
