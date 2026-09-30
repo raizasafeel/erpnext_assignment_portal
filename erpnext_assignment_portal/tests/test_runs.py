@@ -123,6 +123,7 @@ class TestRuns(IntegrationTestCase):
 
 		def edit_then_reply(site, method, payload):
 			self.section.checks[1].expected_min = 100
+			self.section.checks[1].expected_max = 200
 			self.section.save()
 			return {"results": [{"check_id": i, "found_count": 2} for i in self.ids]}
 

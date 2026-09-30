@@ -9,3 +9,4 @@ OPERATORS = frozenset({"=", "!=", "like", "not like", "in", "not in", ">", "<", 
 RUN_ERRORS = ("unreachable", "timeout", "not_installed", "rejected", "bad_response", "internal")
 CHECK_ERRORS = ("not_allowed", "invalid", "timeout")
 DEFAULT_HOST_PATTERN = "*.m.frappe.cloud"
+MAX_CHECKS = 300

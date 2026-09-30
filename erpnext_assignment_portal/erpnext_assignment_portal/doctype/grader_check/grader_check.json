@@ -15,7 +15,8 @@
    "fieldtype": "Data",
    "label": "Check Id",
    "no_copy": 1,
-   "read_only": 1
+   "read_only": 1,
+   "unique": 1
   },
   {
    "fieldname": "title",
