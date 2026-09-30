@@ -35,7 +35,6 @@ def get_boot(csrf_token: str) -> frappe._dict:
 			"socketio_port": frappe.conf.socketio_port,
 			"lang": get_user_lang(),
 			"text_direction": "rtl" if is_rtl() else "ltr",
-			"user": frappe.session.user,
 			"course": get_course(),
 		}
 	)

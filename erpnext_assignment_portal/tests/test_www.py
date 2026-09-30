@@ -34,4 +34,3 @@ class TestPortalPage(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		boot = assignment_portal.get_context(frappe._dict()).boot
 		self.assertEqual(boot.course, {"name": course.name, "title": course.title})
-		self.assertEqual(boot.user, "Administrator")

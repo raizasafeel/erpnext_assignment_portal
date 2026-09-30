@@ -2,12 +2,7 @@
 	<div v-if="loading" class="flex h-screen items-center justify-center">
 		<LoadingIndicator class="size-6" />
 	</div>
-	<NotEnrolled
-		v-else-if="notEnrolled"
-		:course="boot.course ?? null"
-		:user="boot.user ?? ''"
-		@logout="signOut"
-	/>
+	<NotEnrolled v-else-if="notEnrolled" :course="boot.course ?? null" @logout="signOut" />
 	<div v-else-if="loadError" class="p-6">
 		<Alert theme="red" :title="__('Could not load the portal')" :description="loadError" />
 	</div>

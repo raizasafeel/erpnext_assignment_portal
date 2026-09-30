@@ -8,7 +8,7 @@ const COURSE = { name: "erpnext-basics", title: "ERPNext Basics" }
 
 function render(course: typeof COURSE | null = COURSE) {
 	return mount(NotEnrolled, {
-		props: { course, user: "student@example.com" },
+		props: { course },
 		global: { mocks: { __: (s: string, a: string[] = []) => s.replace("{0}", a[0] ?? "") } },
 	})
 }

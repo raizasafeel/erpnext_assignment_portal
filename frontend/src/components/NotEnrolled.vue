@@ -3,8 +3,8 @@
 		<div
 			class="flex w-full max-w-md flex-col items-center gap-6 rounded-7 border border-outline-gray-2 bg-surface-base px-6 py-10 text-center sm:px-10"
 		>
-			<div class="flex size-14 items-center justify-center rounded-full bg-surface-amber-2">
-				<span class="lucide-graduation-cap size-7 text-ink-amber-3" aria-hidden="true" />
+			<div class="flex size-14 items-center justify-center rounded-full bg-surface-gray-2">
+				<span class="lucide-graduation-cap size-7 text-ink-gray-5" aria-hidden="true" />
 			</div>
 			<div class="flex flex-col gap-2">
 				<h1 class="text-xl font-semibold text-ink-gray-9">
@@ -38,7 +38,6 @@
 					@click="emit('logout')"
 				/>
 			</div>
-			<p class="text-p-sm text-ink-gray-5">{{ __("Signed in as {0}", [user]) }}</p>
 		</div>
 	</div>
 </template>
@@ -47,6 +46,6 @@
 import { Button } from "frappe-ui";
 import { __ } from "../translate";
 
-defineProps<{ course: { name: string; title: string } | null; user: string }>();
+defineProps<{ course: { name: string; title: string } | null }>();
 const emit = defineEmits<{ logout: [] }>();
 </script>
