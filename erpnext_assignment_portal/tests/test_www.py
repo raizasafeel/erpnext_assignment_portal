@@ -22,7 +22,7 @@ class TestPortalPage(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		context = assignment_portal.get_context(frappe._dict())
 		self.assertEqual(context.boot.site_name, frappe.local.site)
-		self.assertTrue(context.favicon)
+		self.assertEqual(context.favicon, "/assets/erpnext_assignment_portal/images/logo.svg")
 		self.assertTrue(context.title)
 
 	def test_boot_names_the_course_for_the_not_enrolled_page(self):
