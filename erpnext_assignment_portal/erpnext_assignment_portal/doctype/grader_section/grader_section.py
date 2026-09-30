@@ -11,9 +11,13 @@ SCALARS = (str, int, float)
 
 class GraderSection(Document):
 	def validate(self) -> None:
+		taken = set(
+			frappe.get_all("Grader Check", filters={"parent": ["!=", self.name or ""]}, pluck="check_id")
+		)
 		for check in self.checks:
-			if not check.check_id:
+			if not check.check_id or check.check_id in taken:
 				check.check_id = frappe.generate_hash(length=16)
+			taken.add(check.check_id)
 			validate_filters(check.filters, check.title)
 
 

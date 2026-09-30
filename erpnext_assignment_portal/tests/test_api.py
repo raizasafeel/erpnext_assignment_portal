@@ -84,7 +84,7 @@ class TestApi(IntegrationTestCase):
 		self.assertTrue(api.get_sections())
 
 	def clear_link_counter(self, user):
-		cache = frappe.cache() if callable(frappe.cache) else frappe.cache
+		cache = frappe.cache
 		cache.delete(cache.make_key(f"grader-link-site:{user}"))
 
 	@patch("erpnext_assignment_portal.api.linking.link_site", return_value="x")
@@ -102,6 +102,15 @@ class TestApi(IntegrationTestCase):
 		api.link_site("https://b.m.frappe.cloud")
 		self.assertEqual(link.call_count, 11)
 
+	def test_link_counter_without_ttl_gets_one(self):
+		cache = frappe.cache
+		key = cache.make_key(f"grader-link-site:{self.a}")
+		self.addCleanup(self.clear_link_counter, self.a)
+		cache.set(key, 5)
+		self.assertEqual(cache.ttl(key), -1)
+		api._spend_link_attempt(self.a)
+		self.assertGreater(cache.ttl(key), 0)
+
 	@patch("erpnext_assignment_portal.api.linking.link_site", return_value="x")
 	def test_outsider_does_not_spend_link_budget(self, link):
 		self.clear_link_counter(self.outsider)
@@ -109,7 +118,7 @@ class TestApi(IntegrationTestCase):
 		frappe.set_user(self.outsider)
 		for _ in range(12):
 			self.assertRaises(frappe.PermissionError, api.link_site, "https://x.m.frappe.cloud")
-		cache = frappe.cache() if callable(frappe.cache) else frappe.cache
+		cache = frappe.cache
 		self.assertFalse(cache.get(cache.make_key(f"grader-link-site:{self.outsider}")))
 
 	def link_student(self, user):

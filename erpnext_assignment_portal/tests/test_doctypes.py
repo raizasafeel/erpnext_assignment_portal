@@ -26,6 +26,28 @@ class TestDoctypes(IntegrationTestCase):
 		s.save()
 		self.assertEqual(s.checks[0].check_id, check_id)
 
+	def test_duplicated_check_ids_are_regenerated(self):
+		s = self.make_section([["name", "=", "x"]])
+		s.append("checks", {"title": "copy", "target_doctype": "Warehouse", "filters": "[]"})
+		s.insert()
+		first = s.checks[0].check_id
+		s.checks[1].check_id = first
+		s.save()
+		self.assertEqual(s.checks[0].check_id, first)
+		self.assertNotEqual(s.checks[1].check_id, first)
+
+	def test_check_id_copied_from_another_section_is_regenerated(self):
+		original = self.make_section([["name", "=", "x"]]).insert()
+		copy = frappe.copy_doc(original)
+		copy.slug = "probe-section-copy"
+		copy.checks[0].check_id = original.checks[0].check_id
+		copy.insert()
+		self.assertTrue(copy.checks[0].check_id)
+		self.assertNotEqual(copy.checks[0].check_id, original.checks[0].check_id)
+
+	def test_check_id_is_no_copy(self):
+		self.assertTrue(frappe.get_meta("Grader Check").get_field("check_id").no_copy)
+
 	def test_filter_shape_is_validated(self):
 		for bad in (
 			'"x"',

@@ -71,10 +71,10 @@ def start_run() -> dict:
 
 
 def _spend_link_attempt(user: str) -> None:
-	cache = frappe.cache() if callable(frappe.cache) else frappe.cache
+	cache = frappe.cache
 	key = cache.make_key(f"grader-link-site:{user}")
 	count = cache.incrby(key, 1)
-	if count == 1:
+	if count == 1 or cache.ttl(key) == -1:
 		cache.expire(key, LINK_WINDOW_SECONDS)
 	if count > LINK_LIMIT:
 		frappe.throw(_("Too many link attempts. Try again later."), frappe.RateLimitExceededError)

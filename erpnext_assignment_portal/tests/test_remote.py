@@ -100,3 +100,12 @@ class TestRemote(IntegrationTestCase):
 			self.assertEqual(ctx.exception.code, "rejected")
 		post.assert_not_called()
 		sign.assert_not_called()
+
+	@patch("erpnext_assignment_portal.remote.requests.post")
+	def test_signing_failure_maps_to_internal(self, post, sign):
+		for error in (frappe.ValidationError("no key"), ValueError("bad pem"), TypeError("not ed25519")):
+			sign.side_effect = error
+			with self.subTest(error=error), self.assertRaises(remote.RemoteError) as ctx:
+				self.call()
+			self.assertEqual(ctx.exception.code, "internal")
+		post.assert_not_called()

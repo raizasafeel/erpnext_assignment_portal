@@ -29,7 +29,12 @@ def post_signed(site: str, method: str, payload: dict) -> dict:
 	host = urlparse(site).hostname
 	path = f"/api/method/{method}"
 	body = json.dumps(payload, separators=(",", ":")).encode()
-	headers = {"Content-Type": "application/json", "Accept-Encoding": "identity", **sign(host, path, body)}
+	try:
+		signature_headers = sign(host, path, body)
+	except Exception:
+		frappe.log_error("Grader request signing failed")
+		raise RemoteError("internal")
+	headers = {"Content-Type": "application/json", "Accept-Encoding": "identity", **signature_headers}
 	try:
 		response = requests.post(
 			f"https://{host}{path}",

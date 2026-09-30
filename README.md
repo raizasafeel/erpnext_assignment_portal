@@ -56,6 +56,16 @@ The file is a JSON list of v1 section rows. Each row becomes a Grader Section wi
 
 v1 submissions are not migrated.
 
+## Upgrading from v1
+
+v2 replaces `erpnext_grader` and `erpnext_grader_support`. It does not run beside them.
+
+1. On each site, uninstall the v1 app first: `bench --site <site> uninstall-app erpnext_grader`.
+2. Install v2 (`erpnext_assignment_portal`).
+3. v2 intentionally serves the same `/assignments-portal/erpnext` route as v1.
+4. Students link their trial site again. v1 links and submissions are not migrated.
+5. Trial sites replace `erpnext_grader_support` with `erpnext_assignment_checks` the same way (see that app's README).
+
 ## Run errors
 
 A failed Grader Run has one of these `error_code` values.
