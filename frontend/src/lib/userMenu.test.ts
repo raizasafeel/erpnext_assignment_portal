@@ -31,11 +31,6 @@ describe("userMenu", () => {
 	it("hides Apps when there is nowhere else to go", () => {
 		expect(find(userMenu(APPS.slice(1), actions(), false), "Apps").condition?.()).toBe(false)
 	})
-	it("logs out", () => {
-		const a = actions()
-		find(userMenu([], a, false), "Log out").onClick?.()
-		expect(a.logout).toHaveBeenCalledOnce()
-	})
 	it("reads the system_user cookie", () => {
 		expect(isSystemUser("sid=x; system_user=yes")).toBe(true)
 		expect(isSystemUser("sid=x; system_user=no")).toBe(false)

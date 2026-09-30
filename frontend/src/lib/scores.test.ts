@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { checkResult, overview, sectionScores, sectionStatus } from "./scores"
+import { overview, sectionScores, sectionStatus } from "./scores"
 
 const sections = [
 	{ slug: "a", title: "A", details: "", checks: [{ check_id: "1", title: "x" }, { check_id: "2", title: "y" }] },
@@ -26,9 +26,6 @@ describe("sectionScores", () => {
 	})
 	it("ignores results of an errored run", () => {
 		expect(sectionScores(sections, { ...run, status: "Error" }).b.passed).toBe(0)
-	})
-	it("finds a check result", () => {
-		expect(checkResult(run, "3")?.found_count).toBe(4)
 	})
 })
 

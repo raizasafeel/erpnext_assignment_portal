@@ -13,6 +13,7 @@ describe("hasContent", () => {
 })
 
 describe("withChecklistMarks", () => {
+	// Regression: checklist items rendered as TipTap checkboxes that looked clickable (commit e8ac13f).
 	it("shows [ ] items as static box glyphs, never as form controls", () => {
 		const html = withChecklistMarks("<ul>\n<li>[ ] Fiscal Year is active</li>\n<li>[x] <strong>Country</strong> is set</li>\n</ul>")
 		const doc = new DOMParser().parseFromString(html, "text/html")

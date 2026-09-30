@@ -13,6 +13,7 @@ const titles = (props: Record<string, unknown>) =>
 		.map((a) => a.attributes("data-title"))
 
 describe("RunAlert", () => {
+	// Regression: a revoked site showed the expired alert (commit 4da83d9).
 	it("says a revoked site is revoked, not expired", () => {
 		expect(titles({ revoked: true, expired: true })).toEqual(["Your site access was revoked"])
 	})

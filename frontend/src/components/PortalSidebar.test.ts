@@ -42,6 +42,7 @@ describe("PortalSidebar", () => {
 		])
 		expect(items(w).map((i) => i.vm.$attrs.active)).toEqual([false, true, false])
 	})
+	// Regression: row status was conveyed by colour alone and the filter had no label (commit e8ac13f).
 	it("names each row with its status, not colour alone, and labels the filter", () => {
 		const w = render()
 		expect(items(w)[1].vm.$attrs["aria-label"]).toBe("Warehouses, In progress, 7 of 11 checks passing")
@@ -67,6 +68,7 @@ describe("PortalSidebar", () => {
 		expect(menu.text()).toContain("Grader Student")
 		expect((menu.vm.$attrs.options as { label: string }[]).map((o) => o.label)).toEqual(["Apps", "Log out"])
 	})
+	// Regression: sidebar text used the UI scale instead of Helpdesk's paragraph scale (commit dfa1dcd).
 	it("sets sidebar text in the paragraph scale", () => {
 		const w = render()
 		expect(w.find(".text-p-base-medium").text()).toBe("ERPNext Assignment Portal")

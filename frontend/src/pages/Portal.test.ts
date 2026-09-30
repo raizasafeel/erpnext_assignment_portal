@@ -198,6 +198,7 @@ describe("Portal", () => {
 		expect(api.getRun).toHaveBeenCalledTimes(1)
 	})
 
+	// Regression: Re-check stayed enabled for a revoked site (commit 4da83d9).
 	it.each([
 		["revoked", { revoked: true, expired: false }],
 		["expired", { revoked: false, expired: true }],
@@ -282,6 +283,7 @@ describe("Portal", () => {
 		expect(w.findComponent({ name: "PortalSidebar" }).vm.$attrs.active).toBe("coa")
 	})
 
+	// Regression: an errored run dropped every score to 0 (commit 20a87b3).
 	it("keeps the last Done run's results after a run that errored", async () => {
 		const done = { ...run("Done"), name: "r0", finished_on: "2026-09-29 12:00:00",
 			results: [{ section: "wh", check_id: "1", passed: 1, found_count: 1, check_error: null }] }
@@ -296,6 +298,7 @@ describe("Portal", () => {
 		expect((w.findComponent({ name: "RunAlert" }).vm.$attrs.run as { status: string }).status).toBe("Error")
 	})
 
+	// Regression: a Queued or Running re-check dropped every score to 0 (commit 20a87b3).
 	it("keeps the previous results while a re-check runs and after it fails", async () => {
 		vi.useFakeTimers()
 		const done = { ...run("Done"), name: "r0",
@@ -313,6 +316,7 @@ describe("Portal", () => {
 		expect(hero(w).overview).toMatchObject({ passed: 1 })
 	})
 
+	// Regression: Log out left the page even when the POST failed (commit e8ac13f).
 	it("stays on the page and says why when logging out fails", async () => {
 		api.getContext.mockResolvedValue(context())
 		api.logout.mockRejectedValue(new Error("Network down"))
