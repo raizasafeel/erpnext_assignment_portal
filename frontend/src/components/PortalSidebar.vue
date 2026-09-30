@@ -6,7 +6,9 @@
 					<button
 						type="button"
 						class="flex min-h-12 w-full items-center gap-2 rounded-3 px-2 py-1 text-start"
-						:class="open ? 'bg-surface-elevation-2 shadow-sm' : 'hover:bg-surface-gray-3'"
+						:class="
+							open ? 'bg-surface-elevation-2 shadow-sm' : 'hover:bg-surface-gray-3'
+						"
 					>
 						<img :src="LOGO" alt="" class="size-7 shrink-0 rounded-3" />
 						<span class="flex min-w-0 flex-1 flex-col">
@@ -15,7 +17,10 @@
 							</span>
 							<span class="truncate text-p-sm text-ink-gray-6">{{ fullName }}</span>
 						</span>
-						<span class="lucide-chevron-down size-4 shrink-0 text-ink-gray-7" aria-hidden="true" />
+						<span
+							class="lucide-chevron-down size-4 shrink-0 text-ink-gray-7"
+							aria-hidden="true"
+						/>
 					</button>
 				</template>
 			</Dropdown>
@@ -25,7 +30,9 @@
 				v-model="filter"
 				class="[&_input]:text-p-base"
 				:aria-label="__('Filter sections')"
-				type="search" :placeholder="__('Filter sections')">
+				type="search"
+				:placeholder="__('Filter sections')"
+			>
 				<template #prefix>
 					<span class="lucide-search size-4 text-ink-gray-5" aria-hidden="true" />
 				</template>
@@ -78,7 +85,7 @@ import {
 } from "frappe-ui";
 import { computed, ref } from "vue";
 import type { Section } from "../api";
-import { type Score, type SectionStatus, sectionStatus } from "../lib/scores"
+import { type Score, type SectionStatus, sectionStatus } from "../lib/scores";
 import { __ } from "../translate";
 
 const LOGO = "/assets/erpnext_assignment_portal/images/logo.svg";
@@ -101,19 +108,19 @@ const STATUS_TEXT: Record<SectionStatus, string> = {
 	done: __("Done"),
 	partial: __("In progress"),
 	todo: __("Not started"),
-}
+};
 
-const filter = ref("")
+const filter = ref("");
 
 function itemLabel(s: Section) {
-	const score = props.scores[s.slug]
+	const score = props.scores[s.slug];
 	return __("{0}, {1}, {2} of {3} checks passing", [
 		s.title,
 		STATUS_TEXT[sectionStatus(score)],
 		score.passed,
 		score.total,
-	])
-};
+	]);
+}
 const visible = computed(() => {
 	const q = filter.value.trim().toLowerCase();
 	return q ? props.sections.filter((s) => s.title.toLowerCase().includes(q)) : props.sections;
