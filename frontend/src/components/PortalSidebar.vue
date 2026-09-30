@@ -88,7 +88,7 @@ import type { Section } from "../api";
 import { type Score, type SectionStatus, sectionStatus } from "../lib/scores";
 import { __ } from "../translate";
 
-const LOGO = "/assets/erpnext_assignment_portal/images/logo.svg";
+const LOGO = "/assets/erpnext_assignment_portal/images/portal-logo.svg";
 const DOT: Record<SectionStatus, string> = {
 	done: "bg-surface-green-7",
 	partial: "bg-surface-amber-6",

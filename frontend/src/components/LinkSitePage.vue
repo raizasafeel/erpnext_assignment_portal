@@ -45,7 +45,7 @@ import LinkSiteForm from "./LinkSiteForm.vue";
 
 const emit = defineEmits<{ linked: []; logout: [] }>();
 
-const LOGO = "/assets/erpnext_assignment_portal/images/logo.svg";
+const LOGO = "/assets/erpnext_assignment_portal/images/portal-logo.svg";
 const steps = [
 	__("Start an ERPNext trial on Frappe Cloud with the same email you use here."),
 	__("Install the ERPNext Assignment Checks app on that site."),

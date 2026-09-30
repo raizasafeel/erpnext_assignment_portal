@@ -10,7 +10,7 @@ required_apps = ["lms"]
 add_to_apps_screen = [
 	{
 		"name": "erpnext_assignment_portal",
-		"logo": "/assets/erpnext_assignment_portal/images/logo.svg",
+		"logo": "/assets/erpnext_assignment_portal/images/portal-logo.svg",
 		"title": "Assignment Portal",
 		"route": "/assignments-portal/erpnext",
 	}
