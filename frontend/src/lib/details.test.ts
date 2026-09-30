@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { hasContent, withTaskLists } from "./details"
+import { hasContent, withChecklistMarks } from "./details"
 
 describe("hasContent", () => {
 	it("treats an empty paragraph as no content", () => {
@@ -12,20 +12,17 @@ describe("hasContent", () => {
 	})
 })
 
-describe("withTaskLists", () => {
-	it("turns a [ ] checklist into a task list", () => {
-		const out = new DOMParser().parseFromString(
-			withTaskLists("<ul>\n<li>[ ] Fiscal Year is active</li>\n<li>[x] <strong>Country</strong> is set</li>\n</ul>"),
-			"text/html",
-		)
-		const items = Array.from(out.querySelectorAll('ul[data-type="taskList"] > li[data-type="taskItem"]'))
-		expect(items.map((li) => [li.getAttribute("data-checked"), li.textContent?.trim()])).toEqual([
-			["false", "Fiscal Year is active"],
-			["true", "Country is set"],
+describe("withChecklistMarks", () => {
+	it("shows [ ] items as static box glyphs, never as form controls", () => {
+		const html = withChecklistMarks("<ul>\n<li>[ ] Fiscal Year is active</li>\n<li>[x] <strong>Country</strong> is set</li>\n</ul>")
+		const doc = new DOMParser().parseFromString(html, "text/html")
+		expect(Array.from(doc.querySelectorAll("li")).map((li) => li.textContent)).toEqual([
+			"\u2610 Fiscal Year is active",
+			"\u2611 Country is set",
 		])
+		expect(doc.querySelector("input, [data-type]")).toBeNull()
 	})
-	it("leaves an ordinary list alone", () => {
-		const html = "<ul><li>One</li><li>[ ] Two</li></ul>"
-		expect(withTaskLists(html)).toBe(html)
+	it("leaves ordinary list items alone", () => {
+		expect(withChecklistMarks("<ul><li>One</li></ul>")).toBe("<ul><li>One</li></ul>")
 	})
 })

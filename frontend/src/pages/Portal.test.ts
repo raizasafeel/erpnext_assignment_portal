@@ -313,6 +313,18 @@ describe("Portal", () => {
 		expect(hero(w).overview).toMatchObject({ passed: 1 })
 	})
 
+	it("stays on the page and says why when logging out fails", async () => {
+		api.getContext.mockResolvedValue(context())
+		api.logout.mockRejectedValue(new Error("Network down"))
+		const w = render()
+		await flushPromises()
+		const menu = w.findComponent({ name: "PortalSidebar" }).vm.$attrs.menu as { label: string; onClick: () => void }[]
+		menu.find((o) => o.label === "Log out")!.onClick()
+		await flushPromises()
+		expect(toast.error).toHaveBeenCalledWith("Network down")
+		expect(window.location.pathname).not.toBe("/login")
+	})
+
 	it("gives the sidebar menu Apps and Log out", async () => {
 		api.getContext.mockResolvedValue(context())
 		api.getApps.mockResolvedValue([{ name: "lms", title: "Learning", logo: "/l.svg", route: "/lms" }])

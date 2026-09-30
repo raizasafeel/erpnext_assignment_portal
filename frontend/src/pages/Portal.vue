@@ -271,9 +271,11 @@ async function loadApps() {
 async function signOut() {
 	try {
 		await logout();
-	} finally {
-		window.location.href = "/login";
+	} catch (e) {
+		toast.error(requestErrorMessage(e));
+		return;
 	}
+	window.location.href = "/login";
 }
 
 async function load() {

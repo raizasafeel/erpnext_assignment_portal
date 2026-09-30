@@ -75,6 +75,6 @@ const sectionsPercent = computed(() =>
 const statusLabel = computed(() => {
 	if (props.site.revoked) return __("Revoked");
 	if (props.site.expired) return __("Expired");
-	return __(props.site.status);
+	return props.site.status === "Active" ? __("Active") : __("Inactive");
 });
 </script>

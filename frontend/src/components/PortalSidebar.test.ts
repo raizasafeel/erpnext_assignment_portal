@@ -42,6 +42,11 @@ describe("PortalSidebar", () => {
 		])
 		expect(items(w).map((i) => i.vm.$attrs.active)).toEqual([false, true, false])
 	})
+	it("names each row with its status, not colour alone, and labels the filter", () => {
+		const w = render()
+		expect(items(w)[1].vm.$attrs["aria-label"]).toBe("Warehouses, In progress, 7 of 11 checks passing")
+		expect(w.findComponent({ name: "TextInput" }).vm.$attrs["aria-label"]).toBe("Filter sections")
+	})
 	it("filters sections by title", async () => {
 		const w = render()
 		w.findComponent({ name: "TextInput" }).vm.$emit("update:modelValue", "ware")

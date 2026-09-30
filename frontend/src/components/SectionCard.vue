@@ -87,7 +87,7 @@
 import { Badge, LoadingText } from "frappe-ui";
 import { computed, defineAsyncComponent } from "vue";
 import type { Run, Section } from "../api";
-import { hasContent, withTaskLists } from "../lib/details";
+import { hasContent, withChecklistMarks } from "../lib/details";
 import { type Score, type SectionStatus, checkResult, sectionStatus } from "../lib/scores";
 import { __ } from "../translate";
 
@@ -139,7 +139,7 @@ const emit = defineEmits<{ "update:open": [value: boolean] }>();
 const id = computed(() => `section-card-${props.section.slug}`);
 const number = computed(() => String(props.index + 1).padStart(2, "0"));
 const details = computed(() =>
-	hasContent(props.section.details) ? withTaskLists(props.section.details) : ""
+	hasContent(props.section.details) ? withChecklistMarks(props.section.details) : ""
 );
 const badge = computed(() => {
 	const b = BADGE[sectionStatus(props.score)];
