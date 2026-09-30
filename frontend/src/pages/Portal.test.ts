@@ -45,7 +45,7 @@ const run = (status: string) => ({
 const context = (over = {}) => ({
 	user: "s@example.com", full_name: "S",
 	site: { site: "https://s.m.frappe.cloud", status: "Active", expires_on: null, expired: false, revoked: false },
-	last_run: null, ...over,
+	last_run: null, last_done_run: null, ...over,
 })
 
 function setScreen(mobile: boolean, reducedMotion = false) {
@@ -274,6 +274,37 @@ describe("Portal", () => {
 		spy.callback?.([{ target: coa, isIntersecting: true } as unknown as IntersectionObserverEntry], {} as IntersectionObserver)
 		await flushPromises()
 		expect(w.findComponent({ name: "PortalSidebar" }).vm.$attrs.active).toBe("coa")
+	})
+
+	it("keeps the last Done run's results after a run that errored", async () => {
+		const done = { ...run("Done"), name: "r0", finished_on: "2026-09-29 12:00:00",
+			results: [{ section: "wh", check_id: "1", passed: 1, found_count: 1, check_error: null }] }
+		api.getContext.mockResolvedValue(context({ last_run: { ...run("Error"), error_code: "unreachable" }, last_done_run: done }))
+		const w = render()
+		await flushPromises()
+		const scores = w.findComponent({ name: "PortalSidebar" }).vm.$attrs.scores as Record<string, { passed: number }>
+		expect(scores.wh.passed).toBe(1)
+		expect(hero(w).overview).toMatchObject({ passed: 1, total: 2 })
+		expect(cards(w)[0].vm.$attrs.run).toEqual(done)
+		expect(w.findComponent({ name: "SiteBar" }).vm.$attrs.run).toEqual(done)
+		expect((w.findComponent({ name: "RunAlert" }).vm.$attrs.run as { status: string }).status).toBe("Error")
+	})
+
+	it("keeps the previous results while a re-check runs and after it fails", async () => {
+		vi.useFakeTimers()
+		const done = { ...run("Done"), name: "r0",
+			results: [{ section: "wh", check_id: "1", passed: 1, found_count: 1, check_error: null }] }
+		api.getContext.mockResolvedValue(context({ last_run: done, last_done_run: done }))
+		api.startRun.mockResolvedValue({ run: "r1" })
+		api.getRun.mockResolvedValueOnce(run("Running")).mockResolvedValueOnce({ ...run("Error"), error_code: "timeout" })
+		const w = render()
+		await flushPromises()
+		w.findComponent({ name: "HeroCard" }).vm.$emit("recheck")
+		await flushPromises()
+		expect(hero(w).overview).toMatchObject({ passed: 1 })
+		await vi.advanceTimersByTimeAsync(5000)
+		expect((w.findComponent({ name: "RunAlert" }).vm.$attrs.run as { status: string }).status).toBe("Error")
+		expect(hero(w).overview).toMatchObject({ passed: 1 })
 	})
 
 	it("gives the sidebar menu Apps and Log out", async () => {

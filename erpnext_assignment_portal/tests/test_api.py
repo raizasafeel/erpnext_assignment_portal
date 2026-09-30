@@ -66,6 +66,34 @@ class TestApi(IntegrationTestCase):
 		self.assertTrue(site["revoked"])
 		self.assertEqual(set(site), {"site", "status", "expires_on", "expired", "revoked"})
 
+	def test_context_keeps_last_done_run_after_error(self):
+		frappe.set_user("Administrator")
+		site = frappe.db.get_value(STUDENT_SITE, {"student": self.b})
+		failed = frappe.get_doc(
+			{
+				"doctype": RUN,
+				"student": self.b,
+				"student_site": site,
+				"status": "Error",
+				"error_code": "unreachable",
+			}
+		).insert()
+		frappe.db.set_value(STUDENT_SITE, site, "last_run", failed.name)
+		a_site = self.link_student(self.a)
+		frappe.get_doc(
+			{"doctype": RUN, "student": self.a, "student_site": a_site.name, "status": "Done"}
+		).insert()
+		frappe.set_user(self.b)
+		ctx = api.get_context()
+		self.assertEqual(ctx["last_run"]["name"], failed.name)
+		self.assertEqual(ctx["last_done_run"]["name"], self.b_run)
+		self.assertEqual(set(ctx["last_done_run"]), set(ctx["last_run"]))
+
+	def test_context_has_no_done_run_before_grading(self):
+		self.link_student(self.a)
+		frappe.set_user(self.a)
+		self.assertIsNone(api.get_context()["last_done_run"])
+
 	def test_cannot_read_other_students_run(self):
 		frappe.set_user(self.a)
 		self.assertRaises(frappe.PermissionError, api.get_run, self.b_run)

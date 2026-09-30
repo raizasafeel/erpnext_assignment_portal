@@ -42,7 +42,7 @@
 				v-else
 				class="w-full justify-end"
 				:site="ctx.site"
-				:run="run"
+				:run="graded"
 				:overview="stats"
 				@relink="relinking = true"
 			/>
@@ -51,7 +51,7 @@
 			<SiteBar
 				v-if="isMobile"
 				:site="ctx.site"
-				:run="run"
+				:run="graded"
 				:overview="stats"
 				@relink="relinking = true"
 			/>
@@ -79,7 +79,7 @@
 				<SectionCard
 					:section="s"
 					:index="i"
-					:run="run"
+					:run="graded"
 					:score="scores[s.slug]"
 					:open="openSlugs.has(s.slug)"
 					@update:open="setOpen(s.slug, $event)"
@@ -166,6 +166,7 @@ const loadError = ref("");
 const ctx = ref<Context | null>(null);
 const sections = ref<Section[]>([]);
 const run = ref<Run | null>(null);
+const lastDone = ref<Run | null>(null);
 const grading = ref(false);
 const stillRunning = ref(false);
 const relinking = ref(false);
@@ -182,7 +183,8 @@ let spyPausedUntil = 0;
 let pollTimer: ReturnType<typeof setTimeout> | undefined;
 
 const siteBlocked = computed(() => Boolean(ctx.value?.site?.expired || ctx.value?.site?.revoked));
-const scores = computed(() => sectionScores(sections.value, run.value));
+const graded = computed(() => (run.value?.status === "Done" ? run.value : lastDone.value));
+const scores = computed(() => sectionScores(sections.value, graded.value));
 const stats = computed(() => overview(scores.value));
 const activeSection = computed(() => sections.value.find((s) => s.slug === activeSlug.value));
 const menu = computed(() =>
@@ -283,6 +285,7 @@ async function load() {
 		return;
 	}
 	run.value = ctx.value.last_run;
+	lastDone.value = ctx.value.last_done_run;
 	loading.value = false;
 	const first = initialSection();
 	activeSlug.value = first;
@@ -340,6 +343,7 @@ function settle(latest: Run) {
 	clearTimeout(pollTimer);
 	if (isSettled(latest.name)) return;
 	run.value = latest;
+	if (latest.status === "Done") lastDone.value = latest;
 	grading.value = false;
 	stillRunning.value = false;
 	if (latest.status === "Done") toast.success(__("Grading finished"));

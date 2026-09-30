@@ -32,6 +32,7 @@ export interface Context {
 	full_name: string
 	site: { site: string; status: string; expires_on: string | null; expired: boolean; revoked: boolean } | null
 	last_run: Run | null
+	last_done_run: Run | null
 }
 
 const m = (name: string) => `erpnext_assignment_portal.api.${name}`

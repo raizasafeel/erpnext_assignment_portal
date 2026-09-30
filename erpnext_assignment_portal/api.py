@@ -15,7 +15,7 @@ def get_context() -> dict:
 	user = frappe.session.user
 	require_enrolled(user)
 	site = frappe.db.get_value(
-		STUDENT_SITE, {"student": user}, ["site", "status", "expires_on", "last_run"], as_dict=True
+		STUDENT_SITE, {"student": user}, ["name", "site", "status", "expires_on", "last_run"], as_dict=True
 	)
 	return {
 		"user": user,
@@ -30,6 +30,7 @@ def get_context() -> dict:
 		if site
 		else None,
 		"last_run": _run_dto(site.last_run) if site and site.last_run else None,
+		"last_done_run": _last_done_run(user, site.name) if site else None,
 	}
 
 
@@ -78,6 +79,16 @@ def _spend_link_attempt(user: str) -> None:
 		cache.expire(key, LINK_WINDOW_SECONDS)
 	if count > LINK_LIMIT:
 		frappe.throw(_("Too many link attempts. Try again later."), frappe.RateLimitExceededError)
+
+
+def _last_done_run(user: str, student_site: str) -> dict | None:
+	name = frappe.db.get_value(
+		RUN,
+		{"student": user, "student_site": student_site, "status": "Done"},
+		"name",
+		order_by="creation desc",
+	)
+	return _run_dto(name) if name else None
 
 
 def _run_dto(name: str) -> dict:
