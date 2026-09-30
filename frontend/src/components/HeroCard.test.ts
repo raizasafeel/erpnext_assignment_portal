@@ -2,7 +2,10 @@ import { mount } from "@vue/test-utils"
 import { describe, expect, it, vi } from "vitest"
 import HeroCard from "./HeroCard.vue"
 
-vi.mock("frappe-ui", async () => ({ Button: (await import("../test/stub")).stub("Button") }))
+vi.mock("frappe-ui", async () => {
+	const { stub } = await import("../test/stub")
+	return { Badge: stub("Badge"), Button: stub("Button") }
+})
 
 const OVERVIEW = { passed: 21, total: 106, percent: 20, sectionsDone: 1, sectionsTotal: 14 }
 
@@ -18,6 +21,12 @@ const stat = (w: ReturnType<typeof render>, key: string) =>
 describe("HeroCard", () => {
 	it("greets the student by first name", () => {
 		expect(render().find("h1").text()).toBe("Hi Grader, here's how your ERPNext site is doing")
+	})
+	it("explains the colours with a legend", () => {
+		const labels = render()
+			.findAllComponents({ name: "Badge" })
+			.map((b) => b.attributes("label") ?? b.vm.$attrs.label)
+		expect(labels).toEqual(["Green: done", "Red: needs work"])
 	})
 	it("shows passed, still to fix and sections done", () => {
 		const w = render()

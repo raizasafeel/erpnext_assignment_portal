@@ -1,20 +1,25 @@
 <template>
 	<section
-		class="flex flex-col gap-5 rounded-7 border border-outline-gray-2 bg-surface-base p-5 sm:p-6"
+		class="flex flex-col gap-6 rounded-7 border border-outline-gray-2 bg-surface-base p-5 sm:p-7"
 	>
 		<div class="flex flex-wrap items-start justify-between gap-4">
-			<div class="flex min-w-0 max-w-2xl flex-col gap-1.5">
-				<h1 class="text-xl font-semibold text-ink-gray-9">
-					{{ __("Hi {0}, here's how your ERPNext site is doing", [firstName]) }}
-				</h1>
-				<p class="text-p-base text-ink-gray-7">
-					{{ __("We automatically check your practice site against each assignment.") }}
-					<span class="font-medium text-ink-green-7">{{ __("Green means done.") }}</span>
-					<span class="font-medium text-ink-red-6">{{
-						__("Red means it still needs work.")
-					}}</span>
-					{{ __("Fix the red items below, then press Re-check.") }}
-				</p>
+			<div class="flex min-w-0 max-w-2xl flex-col gap-3">
+				<div class="flex flex-col gap-1.5">
+					<h1 class="text-xl font-semibold text-ink-gray-9">
+						{{ __("Hi {0}, here's how your ERPNext site is doing", [firstName]) }}
+					</h1>
+					<p class="text-p-base text-ink-gray-6">
+						{{
+							__(
+								"We check your practice site against each assignment. Fix the red items, then press Re-check."
+							)
+						}}
+					</p>
+				</div>
+				<div class="flex flex-wrap items-center gap-2" data-legend>
+					<Badge theme="green" :label="__('Green: done')" />
+					<Badge theme="red" :label="__('Red: needs work')" />
+				</div>
 			</div>
 			<Button
 				variant="solid"
@@ -26,9 +31,9 @@
 			/>
 		</div>
 		<div
-			class="grid gap-4 border-t border-outline-gray-1 pt-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]"
+			class="grid items-center gap-6 border-t border-outline-gray-1 pt-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]"
 		>
-			<div class="flex items-center gap-4">
+			<div class="flex items-center gap-5">
 				<ProgressRing :value="overview.percent" />
 				<div class="flex flex-col gap-1">
 					<p class="text-base font-semibold text-ink-gray-9">{{ encouragement }}</p>
@@ -42,7 +47,7 @@
 					v-for="stat in stats"
 					:key="stat.key"
 					:data-stat="stat.key"
-					class="flex flex-col gap-1 rounded-6 border border-outline-gray-2 p-3"
+					class="flex flex-col gap-1.5 rounded-6 border border-outline-gray-2 px-4 py-3.5"
 				>
 					<span class="size-5" :class="stat.icon" aria-hidden="true" />
 					<span class="text-2xl font-semibold" :class="stat.tone">{{ stat.value }}</span>
@@ -54,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { Button } from "frappe-ui";
+import { Badge, Button } from "frappe-ui";
 import { computed } from "vue";
 import type { Overview } from "../lib/scores";
 import { __ } from "../translate";
